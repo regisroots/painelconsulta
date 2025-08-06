@@ -450,16 +450,6 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
                       </p>
                     </div>
                     
-                    {/* Enhanced Pricing - Only show for credit-based modules with cost */}
-                    {modulo.tipo_limite === 'creditos' && modulo.preco_por_consulta > 0 && (
-                      <div className="w-full pt-2">
-                        <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-purple-50 rounded-2xl p-4 border-2 border-blue-100 group-hover:border-blue-200 transition-colors">
-                          <p className="text-sm font-bold text-blue-700">
-                            {parseFloat(String(modulo.preco_por_consulta || 0)).toFixed(0)} créditos
-                          </p>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Enhanced Action Button */}
                     <button className="w-full bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white font-bold py-4 px-6 rounded-2xl hover:from-blue-700 hover:via-indigo-700 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105">
