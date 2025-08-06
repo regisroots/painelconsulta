@@ -137,9 +137,13 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                     className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                     onClick={() => {
                       if (item.href === '#admin/usuarios') {
-                        window.location.href = '/admin/dashboard';
+                        window.location.href = '/admin/usuarios';
                       } else if (item.href === '#admin/modulos') {
                         window.location.href = '/admin/modulos';
+                      } else if (item.href === '#admin/logs') {
+                        window.location.href = '/admin/dashboard';
+                      } else if (item.href === '#admin/config') {
+                        window.location.href = '/admin/dashboard';
                       }
                     }}
                   >

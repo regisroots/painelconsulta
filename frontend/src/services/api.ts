@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, User, Consulta, Log } from '../types';
+import { AuthResponse, Consulta, Log } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -39,13 +39,13 @@ export const authAPI = {
 };
 
 export const userAPI = {
-  getUsers: (): Promise<User[]> =>
+  getUsers: () =>
     api.get('/users').then(res => res.data),
   
-  createUser: (userData: Partial<User>) =>
+  createUser: (userData: any) =>
     api.post('/users', userData).then(res => res.data),
   
-  updateUser: (id: number, userData: Partial<User>) =>
+  updateUser: (id: number, userData: any) =>
     api.put(`/users/${id}`, userData).then(res => res.data),
   
   banUser: (id: number, motivo: string) =>
