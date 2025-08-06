@@ -172,7 +172,7 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <header className="h-16 bg-background border-b border-gray-200 flex items-center justify-between px-6">
+        <header className="h-12 bg-background border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
           <Button
             variant="ghost"
             size="icon"
@@ -190,7 +190,7 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-4 pt-2">
+        <main className="p-2">
           {children}
         </main>
       </div>
