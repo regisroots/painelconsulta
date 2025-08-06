@@ -1,45 +1,103 @@
-const { Log, User } = require('../models');
+const { LogService } = require('../services/logService');
 
-const getLogs = async (req, res) => {
-  try {
-    const { page = 1, limit = 10, tipo, usuario_id } = req.query;
-    const offset = (page - 1) * limit;
+class LogController {
+  static async listarLogs(req, res) {
+    try {
+      const { 
+        page, 
+        limit, 
+        tipo, 
+        usuarioId, 
+        nomeUsuario,
+        dataInicio,
+        dataFim,
+        acao 
+      } = req.query;
+      
+      const filtros = {
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 50,
+        tipo,
+        usuarioId: usuarioId ? parseInt(usuarioId) : undefined,
+        nomeUsuario,
+        dataInicio,
+        dataFim,
+        acao
+      };
 
-    const whereClause = {};
-    if (tipo) whereClause.tipo = tipo;
-    if (usuario_id) whereClause.usuario_id = usuario_id;
+      if (req.user.tipo === 'revendedor') {
+        filtros.usuarioId = req.user.id;
+      }
 
-    if (req.user.tipo === 'revendedor') {
-      whereClause.usuario_id = req.user.id;
+      const resultado = await LogService.buscarLogs(filtros);
+
+      res.json({
+        success: true,
+        data: resultado,
+        filtros: filtros
+      });
+    } catch (error) {
+      console.error('Erro ao listar logs:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
     }
-
-    const logs = await Log.findAndCountAll({
-      where: whereClause,
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'nome', 'email'],
-          required: false,
-        },
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['data', 'DESC']],
-    });
-
-    res.json({
-      logs: logs.rows,
-      total: logs.count,
-      page: parseInt(page),
-      totalPages: Math.ceil(logs.count / limit),
-    });
-
-  } catch (error) {
-    console.error('Erro ao buscar logs:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
   }
-};
+
+  static async listarLogsUsuario(req, res) {
+    try {
+      const { page, limit, dataInicio, dataFim, tipo } = req.query;
+      const usuarioId = req.user.id;
+      
+      const filtros = {
+        page: page ? parseInt(page) : 1,
+        limit: limit ? parseInt(limit) : 20,
+        dataInicio,
+        dataFim,
+        tipo: tipo || 'consulta'
+      };
+
+      const resultado = await LogService.buscarLogsUsuario(usuarioId, filtros);
+
+      res.json({
+        success: true,
+        data: resultado,
+        filtros: filtros
+      });
+    } catch (error) {
+      console.error('Erro ao listar logs do usuário:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+
+  static async criarLog(req, res) {
+    try {
+      const { tipo, acao, detalhes } = req.body;
+      const usuarioId = req.user?.id;
+
+      const log = await LogService.criarLog(tipo, usuarioId, acao, detalhes, req);
+
+      res.status(201).json({
+        success: true,
+        data: log
+      });
+    } catch (error) {
+      console.error('Erro ao criar log:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Erro interno do servidor'
+      });
+    }
+  }
+}
+
+const getLogs = LogController.listarLogs;
 
 module.exports = {
+  LogController,
   getLogs,
 };

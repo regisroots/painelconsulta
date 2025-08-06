@@ -8,7 +8,7 @@ module.exports = (sequelize) => {
       autoIncrement: true,
     },
     tipo: {
-      type: DataTypes.ENUM('admin_action', 'revendedor_action', 'consulta'),
+      type: DataTypes.ENUM('admin_action', 'revendedor_action', 'consulta', 'login', 'logout', 'error'),
       allowNull: false,
     },
     usuario_id: {
@@ -27,6 +27,18 @@ module.exports = (sequelize) => {
       type: DataTypes.JSON,
       allowNull: true,
     },
+    ip_address: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    user_agent: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    duracao_ms: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+    },
     data: {
       type: DataTypes.DATE,
       allowNull: false,
@@ -38,6 +50,12 @@ module.exports = (sequelize) => {
     createdAt: 'data',
     updatedAt: 'updatedAt',
   });
+
+  Log.associate = function(models) {
+    Log.belongsTo(models.User, {
+      foreignKey: 'usuario_id'
+    });
+  };
 
   return Log;
 };

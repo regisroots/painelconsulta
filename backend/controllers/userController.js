@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const { User } = require('../models');
-const { logAdminAction, logRevendedorAction } = require('../services/logService');
+const { logAdminAction, logRevendedorAction, LogService } = require('../services/logService');
 
 const getUsers = async (req, res) => {
   try {
@@ -186,9 +187,131 @@ const banUser = async (req, res) => {
   }
 };
 
+const login = async (req, res) => {
+  const startTime = Date.now();
+  req.startTime = startTime;
+  
+  try {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      await LogService.criarLog('error', null, 'Tentativa de login sem email/senha', { email }, req);
+      return res.status(400).json({ error: 'Email e senha são obrigatórios' });
+    }
+
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      await LogService.criarLog('error', null, 'Tentativa de login com email inexistente', { email }, req);
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    if (user.banido) {
+      await LogService.criarLog('error', user.id, 'Tentativa de login de usuário banido', { motivo: user.motivo_banimento }, req);
+      return res.status(403).json({ 
+        error: 'Usuário banido', 
+        motivo: user.motivo_banimento 
+      });
+    }
+
+    if (!user.ativo) {
+      await LogService.criarLog('error', user.id, 'Tentativa de login de usuário inativo', null, req);
+      return res.status(403).json({ error: 'Usuário inativo' });
+    }
+
+    if (user.data_expiracao && new Date() > user.data_expiracao) {
+      await LogService.criarLog('error', user.id, 'Tentativa de login de usuário expirado', { data_expiracao: user.data_expiracao }, req);
+      return res.status(403).json({ error: 'Usuário expirado' });
+    }
+
+    const senhaValida = await bcrypt.compare(senha, user.senha_hash);
+    if (!senhaValida) {
+      await LogService.criarLog('error', user.id, 'Tentativa de login com senha incorreta', null, req);
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    const token = jwt.sign(
+      { 
+        id: user.id, 
+        email: user.email, 
+        tipo: user.tipo 
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    await LogService.criarLog('login', user.id, 'Login realizado com sucesso', null, req);
+
+    res.json({
+      message: 'Login realizado com sucesso',
+      token,
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        tipo: user.tipo,
+        creditos: user.creditos,
+        dias_ativos: user.dias_ativos,
+        data_expiracao: user.data_expiracao,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro no login:', error);
+    await LogService.criarLog('error', null, 'Erro interno no login', { error: error.message }, req);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const register = async (req, res) => {
+  const startTime = Date.now();
+  req.startTime = startTime;
+  
+  try {
+    const { nome, email, senha } = req.body;
+
+    if (!nome || !email || !senha) {
+      return res.status(400).json({ error: 'Nome, email e senha são obrigatórios' });
+    }
+
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ error: 'Email já cadastrado' });
+    }
+
+    const senha_hash = await bcrypt.hash(senha, 10);
+
+    const user = await User.create({
+      nome,
+      email,
+      senha_hash,
+      tipo: 'usuario',
+      dias_ativos: 0,
+      creditos: 0,
+    });
+
+    await LogService.criarLog('admin_action', user.id, 'Usuário registrado', { email, nome }, req);
+
+    res.status(201).json({
+      message: 'Usuário registrado com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        tipo: user.tipo,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro no registro:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
 module.exports = {
   getUsers,
   createUser,
   updateUser,
   banUser,
+  login,
+  register,
 };

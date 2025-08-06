@@ -35,7 +35,21 @@ const authenticateToken = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    return res.status(403).json({ error: 'Token inválido' });
+    console.error('Erro na verificação do token:', error);
+    
+    let message = 'Token inválido';
+    if (error.name === 'TokenExpiredError') {
+      message = 'Token expirado';
+    } else if (error.name === 'JsonWebTokenError') {
+      message = 'Token malformado';
+    } else if (error.name === 'NotBeforeError') {
+      message = 'Token ainda não é válido';
+    }
+    
+    return res.status(403).json({ 
+      error: message,
+      errorType: error.name
+    });
   }
 };
 

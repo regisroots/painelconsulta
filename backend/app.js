@@ -94,6 +94,47 @@ app.get('/health', (req, res) => {
   });
 });
 
+app.get('/api/test/status', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API funcionando corretamente',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/api/test/cpf/:cpf', async (req, res) => {
+  try {
+    const { cpf } = req.params;
+    
+    if (!cpf || cpf.length !== 11) {
+      return res.status(400).json({
+        success: false,
+        message: 'CPF deve ter 11 dígitos'
+      });
+    }
+
+    const apiUrl = `https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cpf&Info=${cpf}`;
+    
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    
+    res.json({
+      success: true,
+      message: 'Consulta CPF realizada com sucesso',
+      data: data,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Erro na consulta CPF de teste:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
 app.use((err, req, res, next) => {
   console.error('Erro:', err);
   
