@@ -28,8 +28,13 @@ const authenticateToken = async (req, res, next) => {
       });
     }
 
-    if (user.data_expiracao && new Date() > user.data_expiracao) {
-      return res.status(401).json({ error: 'Conta expirada' });
+    if (user.tipo === 'usuario' && user.data_expiracao && new Date() > user.data_expiracao) {
+      return res.status(401).json({ 
+        error: 'Conta expirada',
+        revendedor_contato: user.revendedor_id ? await User.findByPk(user.revendedor_id, {
+          attributes: ['whatsapp_contato', 'telegram_contato', 'nome']
+        }) : null
+      });
     }
 
     req.user = user;
