@@ -15,6 +15,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [expiredUser, setExpiredUser] = useState<any>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,7 +28,14 @@ export default function Login({ onLogin }: LoginProps) {
       localStorage.setItem('user', JSON.stringify(response.user));
       onLogin(response.user);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Erro ao fazer login');
+      const errorData = err.response?.data;
+      if (errorData?.expired && errorData?.revendedor) {
+        setExpiredUser(errorData);
+        setError('');
+      } else {
+        setError(errorData?.error || 'Erro ao fazer login');
+        setExpiredUser(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -79,6 +87,55 @@ export default function Login({ onLogin }: LoginProps) {
                 className="h-12 text-base border-2 border-gray-200 focus:border-blue-500 rounded-xl transition-colors"
               />
             </div>
+            
+            {expiredUser && (
+              <div className="p-6 text-sm bg-orange-50 border-2 border-orange-200 rounded-xl">
+                <h4 className="font-bold text-orange-800 mb-3">Conta Expirada</h4>
+                <p className="text-orange-700 mb-4">
+                  Sua conta expirou. Entre em contato com seu revendedor para renovar:
+                </p>
+                
+                {expiredUser.revendedor && (
+                  <div className="bg-white rounded-lg p-4 border border-orange-200">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {expiredUser.revendedor.nome.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900">{expiredUser.revendedor.nome}</p>
+                        <p className="text-gray-600 text-xs">{expiredUser.revendedor.email}</p>
+                      </div>
+                    </div>
+                    
+                    {(expiredUser.revendedor.whatsapp_contato || expiredUser.revendedor.telegram_contato) && (
+                      <div className="flex space-x-2">
+                        {expiredUser.revendedor.whatsapp_contato && (
+                          <a
+                            href={`https://wa.me/${expiredUser.revendedor.whatsapp_contato.replace(/\D/g, '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center space-x-1 bg-green-500 text-white px-3 py-1 rounded-lg hover:bg-green-600 transition-colors text-xs"
+                          >
+                            <span>WhatsApp</span>
+                          </a>
+                        )}
+                        
+                        {expiredUser.revendedor.telegram_contato && (
+                          <a
+                            href={`https://t.me/${expiredUser.revendedor.telegram_contato.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center space-x-1 bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors text-xs"
+                          >
+                            <span>Telegram</span>
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
             
             {error && (
               <div className="p-4 text-sm text-red-700 bg-red-50 border-2 border-red-200 rounded-xl">

@@ -6,6 +6,7 @@ import AdminDashboard from './components/admin/AdminDashboard'
 import AdminModules from './components/admin/AdminModules'
 import AdminUsers from './components/admin/AdminUsers'
 import Profile from './components/Profile'
+import ConsultationHistory from './components/ConsultationHistory'
 import { User } from './types'
 
 function App() {
@@ -69,6 +70,16 @@ function App() {
           element={
             user ? (
               <Profile user={user} onUserUpdate={setUser} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/historico" 
+          element={
+            user ? (
+              <ConsultationHistory onBack={() => window.location.href = '/'} />
             ) : (
               <Navigate to="/login" replace />
             )

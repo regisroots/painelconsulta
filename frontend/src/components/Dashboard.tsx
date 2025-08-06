@@ -108,7 +108,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         </div>
 
         {/* Reseller Contact Information */}
-        {false && user.tipo === 'usuario' && (user as any).revendedor && (
+        {user.tipo === 'usuario' && (user as any).revendedor && (
           <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/30 p-8 mb-12">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -219,6 +219,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
           </div>
+          
         </div>
 
         {/* Enhanced Services Section */}

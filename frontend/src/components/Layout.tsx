@@ -111,6 +111,8 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                   onClick={() => {
                     if (item.href.startsWith('/')) {
                       window.location.href = item.href;
+                    } else if (item.href === '#historico') {
+                      window.location.href = '/historico';
                     }
                   }}
                 >
@@ -182,9 +184,22 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                 Bem-vindo, {user.nome}
               </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-green-600 font-medium">Online</span>
+            <div className="flex items-center space-x-3">
+              {(user.tipo === 'admin' || user.tipo === 'revendedor') && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md"
+                  onClick={() => window.location.href = '/admin/dashboard'}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  Admin
+                </Button>
+              )}
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-green-600 font-medium">Online</span>
+              </div>
             </div>
           </div>
         </header>
