@@ -4,6 +4,7 @@ import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import AdminDashboard from './components/admin/AdminDashboard'
 import AdminModules from './components/admin/AdminModules'
+import AdminUsers from './components/admin/AdminUsers'
 import { User } from './types'
 
 function App() {
@@ -67,22 +68,9 @@ function App() {
           element={
             user && (user.tipo === 'admin' || user.tipo === 'revendedor') ? (
               <Routes>
-                <Route path="dashboard" element={<AdminDashboard user={user} />} />
-                <Route path="modulos" element={<AdminModules user={user} />} />
-                <Route path="" element={<Navigate to="dashboard" replace />} />
-              </Routes>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/admin/*" 
-          element={
-            user && (user.tipo === 'admin' || user.tipo === 'revendedor') ? (
-              <Routes>
                 <Route path="dashboard" element={<AdminDashboard user={user} onLogout={handleLogout} />} />
                 <Route path="modulos" element={<AdminModules user={user} onLogout={handleLogout} />} />
+                <Route path="usuarios" element={<AdminUsers user={user} onLogout={handleLogout} />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             ) : (
