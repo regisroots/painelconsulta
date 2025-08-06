@@ -74,9 +74,6 @@ export const userAPI = {
   
   changeUserRole: (id: number, tipo: string) =>
     api.put(`/users/${id}/role`, { tipo }).then(res => res.data),
-  
-  unbanUser: (id: number) =>
-    api.post(`/users/${id}/unban`).then(res => res.data),
 };
 
 export const moduloAPI = {
