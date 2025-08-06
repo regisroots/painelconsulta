@@ -3,16 +3,23 @@ const { Consulta, Modulo, User } = require('../models');
 const { logConsulta } = require('./logService');
 
 const executarConsulta = async (usuario_id, modulo_id, input) => {
+  console.log('=== INICIANDO EXECUCAO DE CONSULTA ===');
+  console.log('Usuario ID:', usuario_id);
+  console.log('Modulo ID:', modulo_id);
+  console.log('Input:', input);
+  
   const transaction = await require('../models').sequelize.transaction();
 
   try {
     const user = await User.findByPk(usuario_id, {
       transaction,
     });
+    console.log('Usuario encontrado:', user ? user.nome : 'NAO ENCONTRADO');
 
     const modulo = await Modulo.findByPk(modulo_id, {
       transaction,
     });
+    console.log('Modulo encontrado:', modulo ? modulo.nome : 'NAO ENCONTRADO');
 
     if (!modulo || !modulo.ativo) {
       throw new Error('Módulo não encontrado ou inativo');
@@ -72,10 +79,14 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
       if (!novosModulos[modulo_id]) {
         novosModulos[modulo_id] = { limite: 0, usado: 0 };
       }
+      console.log('Modulos antes da atualizacao:', user.modulos);
+      console.log('Incrementando uso do modulo:', modulo_id);
       novosModulos[modulo_id].usado += 1;
       user.modulos = novosModulos;
+      console.log('Modulos apos atualizacao:', user.modulos);
 
       await user.save({ transaction });
+      console.log('Usuario salvo no banco de dados');
 
     } catch (apiError) {
       console.error('Erro na API externa:', apiError.message);

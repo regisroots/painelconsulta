@@ -6,9 +6,10 @@ import DynamicJsonRenderer from './DynamicJsonRenderer';
 interface ConsultaInterfaceProps {
   modulo: Modulo;
   onBack: () => void;
+  onConsultationComplete?: () => void;
 }
 
-export default function ConsultaInterface({ modulo, onBack }: ConsultaInterfaceProps) {
+export default function ConsultaInterface({ modulo, onBack, onConsultationComplete }: ConsultaInterfaceProps) {
   const [inputData, setInputData] = useState<Record<string, string>>({});
   const [resultado, setResultado] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -25,6 +26,9 @@ export default function ConsultaInterface({ modulo, onBack }: ConsultaInterfaceP
     try {
       const response = await consultaAPI.realizarConsulta(modulo.id, inputData);
       setResultado(response.retorno);
+      if (onConsultationComplete) {
+        onConsultationComplete();
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao realizar consulta');
     } finally {

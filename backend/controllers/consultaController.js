@@ -2,10 +2,15 @@ const { Consulta, Modulo, User } = require('../models');
 const { executarConsulta } = require('../services/consultaService');
 
 const realizarConsulta = async (req, res) => {
+  console.log('=== RECEBIDA REQUISICAO DE CONSULTA ===');
+  console.log('User ID:', req.user?.id);
+  console.log('Body:', req.body);
+  
   try {
     const { modulo_id, input } = req.body;
 
     if (!modulo_id || !input) {
+      console.log('ERRO: Dados obrigatorios ausentes');
       return res.status(400).json({ error: 'Módulo e dados de entrada são obrigatórios' });
     }
 

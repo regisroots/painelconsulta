@@ -55,7 +55,10 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
     return (
       <ConsultaInterface 
         modulo={selectedModulo} 
-        onBack={() => setSelectedModulo(null)} 
+        onBack={() => setSelectedModulo(null)}
+        onConsultationComplete={() => {
+          loadUserData();
+        }}
       />
     );
   }
