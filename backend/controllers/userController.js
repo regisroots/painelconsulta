@@ -364,11 +364,350 @@ const getUserMetrics = async (req, res) => {
   }
 };
 
+const addCredits = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Quantidade de créditos deve ser maior que zero' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+    }
+
+    user.creditos += parseInt(amount);
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Créditos adicionados', { 
+      usuario_id: id,
+      quantidade: amount,
+      creditos_final: user.creditos
+    });
+
+    res.json({
+      message: 'Créditos adicionados com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        creditos: user.creditos,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao adicionar créditos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const removeCredits = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount } = req.body;
+
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ error: 'Quantidade de créditos deve ser maior que zero' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+    }
+
+    user.creditos = Math.max(0, user.creditos - parseInt(amount));
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Créditos removidos', { 
+      usuario_id: id,
+      quantidade: amount,
+      creditos_final: user.creditos
+    });
+
+    res.json({
+      message: 'Créditos removidos com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        creditos: user.creditos,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao remover créditos:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const addDays = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days } = req.body;
+
+    if (!days || days <= 0) {
+      return res.status(400).json({ error: 'Quantidade de dias deve ser maior que zero' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+    }
+
+    user.dias_ativos += parseInt(days);
+    
+    if (user.data_expiracao) {
+      const currentExpiration = new Date(user.data_expiracao);
+      currentExpiration.setDate(currentExpiration.getDate() + parseInt(days));
+      user.data_expiracao = currentExpiration;
+    } else {
+      const newExpiration = new Date();
+      newExpiration.setDate(newExpiration.getDate() + parseInt(days));
+      user.data_expiracao = newExpiration;
+    }
+
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Dias adicionados', { 
+      usuario_id: id,
+      quantidade: days,
+      dias_ativos_final: user.dias_ativos,
+      nova_expiracao: user.data_expiracao
+    });
+
+    res.json({
+      message: 'Dias adicionados com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        dias_ativos: user.dias_ativos,
+        data_expiracao: user.data_expiracao,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao adicionar dias:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const removeDays = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days } = req.body;
+
+    if (!days || days <= 0) {
+      return res.status(400).json({ error: 'Quantidade de dias deve ser maior que zero' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+    }
+
+    user.dias_ativos = Math.max(0, user.dias_ativos - parseInt(days));
+    
+    if (user.data_expiracao) {
+      const currentExpiration = new Date(user.data_expiracao);
+      currentExpiration.setDate(currentExpiration.getDate() - parseInt(days));
+      
+      if (currentExpiration <= new Date()) {
+        user.data_expiracao = null;
+        user.dias_ativos = 0;
+      } else {
+        user.data_expiracao = currentExpiration;
+      }
+    }
+
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Dias removidos', { 
+      usuario_id: id,
+      quantidade: days,
+      dias_ativos_final: user.dias_ativos,
+      nova_expiracao: user.data_expiracao
+    });
+
+    res.json({
+      message: 'Dias removidos com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        dias_ativos: user.dias_ativos,
+        data_expiracao: user.data_expiracao,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao remover dias:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const addHours = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { hours } = req.body;
+
+    if (!hours || hours <= 0) {
+      return res.status(400).json({ error: 'Quantidade de horas deve ser maior que zero' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+    }
+
+    const hoursInDays = parseInt(hours) / 24;
+    user.dias_ativos += hoursInDays;
+    
+    if (user.data_expiracao) {
+      const currentExpiration = new Date(user.data_expiracao);
+      currentExpiration.setHours(currentExpiration.getHours() + parseInt(hours));
+      user.data_expiracao = currentExpiration;
+    } else {
+      const newExpiration = new Date();
+      newExpiration.setHours(newExpiration.getHours() + parseInt(hours));
+      user.data_expiracao = newExpiration;
+    }
+
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Horas adicionadas', { 
+      usuario_id: id,
+      quantidade: hours,
+      dias_ativos_final: user.dias_ativos,
+      nova_expiracao: user.data_expiracao
+    });
+
+    res.json({
+      message: 'Horas adicionadas com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        dias_ativos: user.dias_ativos,
+        data_expiracao: user.data_expiracao,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao adicionar horas:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const changeUserRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tipo } = req.body;
+
+    if (!tipo || !['admin', 'revendedor', 'usuario'].includes(tipo)) {
+      return res.status(400).json({ error: 'Tipo de usuário inválido' });
+    }
+
+    if (req.user.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Apenas administradores podem alterar roles' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const oldTipo = user.tipo;
+    user.tipo = tipo;
+    await user.save();
+
+    await logAdminAction(req.user.id, 'Role alterado', { 
+      usuario_id: id,
+      role_anterior: oldTipo,
+      role_novo: tipo
+    });
+
+    res.json({
+      message: 'Role alterado com sucesso',
+      user: {
+        id: user.id,
+        nome: user.nome,
+        email: user.email,
+        tipo: user.tipo,
+      },
+    });
+
+  } catch (error) {
+    console.error('Erro ao alterar role:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
+const unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
+      return res.status(403).json({ error: 'Revendedor não pode desbanir admin' });
+    }
+
+    user.banido = false;
+    user.motivo_banimento = null;
+    user.ativo = true;
+    await user.save();
+
+    const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(req.user.id, 'Usuário desbanido', { 
+      usuario_id: id
+    });
+
+    res.json({ message: 'Usuário desbanido com sucesso' });
+
+  } catch (error) {
+    console.error('Erro ao desbanir usuário:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
 module.exports = {
   getUsers,
   createUser,
   updateUser,
   banUser,
+  unbanUser,
+  addCredits,
+  removeCredits,
+  addDays,
+  removeDays,
+  addHours,
+  changeUserRole,
   login,
   register,
   getUserMetrics,

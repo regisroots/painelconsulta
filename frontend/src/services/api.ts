@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, Consulta, Log, User } from '../types';
+import { AuthResponse, Consulta, User } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
@@ -53,6 +53,30 @@ export const userAPI = {
   
   banUser: (id: number, motivo: string) =>
     api.post(`/users/${id}/ban`, { motivo }).then(res => res.data),
+  
+  unbanUser: (id: number) =>
+    api.post(`/users/${id}/unban`).then(res => res.data),
+  
+  addCredits: (id: number, amount: number) =>
+    api.post(`/users/${id}/credits/add`, { amount }).then(res => res.data),
+  
+  removeCredits: (id: number, amount: number) =>
+    api.post(`/users/${id}/credits/remove`, { amount }).then(res => res.data),
+  
+  addDays: (id: number, days: number) =>
+    api.post(`/users/${id}/days/add`, { days }).then(res => res.data),
+  
+  removeDays: (id: number, days: number) =>
+    api.post(`/users/${id}/days/remove`, { days }).then(res => res.data),
+  
+  addHours: (id: number, hours: number) =>
+    api.post(`/users/${id}/hours/add`, { hours }).then(res => res.data),
+  
+  changeUserRole: (id: number, tipo: string) =>
+    api.put(`/users/${id}/role`, { tipo }).then(res => res.data),
+  
+  unbanUser: (id: number) =>
+    api.post(`/users/${id}/unban`).then(res => res.data),
 };
 
 export const moduloAPI = {
@@ -65,23 +89,21 @@ export const moduloAPI = {
   delete: (id: number) => api.delete(`/modulos/${id}`).then(res => res.data),
 };
 
-export const consultaAPI = {
-  realizarConsulta: (moduloId: number, input: Record<string, any>) =>
-    api.post('/consultas', { modulo_id: moduloId, input }).then(res => res.data),
-  
-  getConsultas: (): Promise<Consulta[]> =>
-    api.get('/consultas').then(res => res.data),
-  
-  getConsultaById: (id: number): Promise<Consulta> =>
-    api.get(`/consultas/${id}`).then(res => res.data),
-  
-  getAllConsultas: (): Promise<Consulta[]> =>
-    api.get('/consultas/admin/all').then(res => res.data),
-};
 
 export const logAPI = {
-  getLogs: (): Promise<Log[]> =>
-    api.get('/logs').then(res => res.data),
+  getLogs: (params?: { tipo?: string; page?: number; limit?: number }) =>
+    api.get('/logs', { params }).then(res => res.data),
+};
+
+export const consultaAPI = {
+  getConsultas: (): Promise<Consulta[]> =>
+    api.get('/consultas').then(res => res.data),
+  getAllConsultas: (params?: { limit?: number; usuario_id?: number; modulo_id?: number }) =>
+    api.get('/consultas/admin/all', { params }).then(res => res.data),
+  realizarConsulta: (moduloId: number, input: Record<string, any>) =>
+    api.post('/consultas', { modulo_id: moduloId, input }).then(res => res.data),
+  getConsultaById: (id: number): Promise<Consulta> =>
+    api.get(`/consultas/${id}`).then(res => res.data),
 };
 
 export const profileAPI = {

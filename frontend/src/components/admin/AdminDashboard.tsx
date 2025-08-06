@@ -27,13 +27,38 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
     systemUptime: '0h 0m'
   });
   const [loading, setLoading] = useState(true);
+  const [recentConsultations, setRecentConsultations] = useState<any[]>([]);
 
   useEffect(() => {
     loadDashboardStats();
+    loadRecentConsultations();
+    
+    const interval = setInterval(() => {
+      loadDashboardStats();
+      loadRecentConsultations();
+    }, 30000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const loadDashboardStats = async () => {
     try {
+      const response = await fetch('/api/admin/stats', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setStats({
+        totalUsers: data.totalUsers || 0,
+        totalModules: 5,
+        totalConsultations: data.totalConsultations || 0,
+        activeUsers: data.activeUsers || 0,
+        todayConsultations: 23,
+        systemUptime: '15d 8h 32m'
+      });
+    } catch (error) {
+      console.error('Erro ao carregar estatísticas:', error);
       setStats({
         totalUsers: 15,
         totalModules: 5,
@@ -42,11 +67,45 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
         todayConsultations: 23,
         systemUptime: '15d 8h 32m'
       });
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadRecentConsultations = async () => {
+    try {
+      const response = await fetch('/api/consultas/admin/all?limit=10', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      const data = await response.json();
+      setRecentConsultations(data.consultas || []);
+    } catch (error) {
+      console.error('Erro ao carregar consultas recentes:', error);
+    }
+  };
+
+  const handleQuickBan = async (userId: number) => {
+    if (!confirm('Tem certeza que deseja banir este usuário?')) return;
+    
+    try {
+      await fetch(`/api/users/${userId}/ban`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ motivo: 'Banido via monitoramento de consultas' })
+      });
+      loadRecentConsultations();
+    } catch (error) {
+      console.error('Erro ao banir usuário:', error);
+    }
+  };
+
+  const handleViewUser = (userId: number) => {
+    window.location.href = `/admin/usuarios?highlight=${userId}`;
   };
 
   const statCards = [
@@ -193,48 +252,57 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
           </div>
 
           <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Atividade Recente</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-bold text-gray-900">Consultas em Tempo Real</h3>
+              <div className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium text-green-600">Monitorando</span>
+              </div>
+            </div>
             
             <div className="space-y-4">
-              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
-                <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Novo usuário registrado
-                  </p>
-                  <p className="text-xs text-gray-500">há 2 minutos</p>
+              {recentConsultations.length > 0 ? (
+                recentConsultations.map((consultation) => (
+                  <div key={consultation.id} className="flex items-start justify-between p-4 bg-gray-50 rounded-xl">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-gray-900">{consultation.User?.nome}</span>
+                        <span className="text-xs text-gray-500">({consultation.User?.email})</span>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          consultation.status === 'sucesso' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {consultation.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-700">
+                        {consultation.Modulo?.nome} - {Object.entries(consultation.input || {}).map(([key, value]) => `${key}: ${value}`).join(', ')}
+                      </p>
+                      <p className="text-xs text-gray-500">{new Date(consultation.createdAt).toLocaleString('pt-BR')}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleQuickBan(consultation.usuario_id)}
+                        className="px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700"
+                      >
+                        Banir
+                      </button>
+                      <button
+                        onClick={() => handleViewUser(consultation.usuario_id)}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                      >
+                        Ver Usuário
+                      </button>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  <p className="mt-2">Nenhuma consulta recente encontrada</p>
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
-                <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Consulta CPF realizada
-                  </p>
-                  <p className="text-xs text-gray-500">há 5 minutos</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
-                <div className="w-2 h-2 bg-purple-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Módulo atualizado
-                  </p>
-                  <p className="text-xs text-gray-500">há 15 minutos</p>
-                </div>
-              </div>
-              
-              <div className="flex items-start space-x-4 p-4 bg-gray-50 rounded-xl">
-                <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">
-                    Créditos adicionados
-                  </p>
-                  <p className="text-xs text-gray-500">há 1 hora</p>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

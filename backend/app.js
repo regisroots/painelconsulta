@@ -72,8 +72,12 @@ console.log('Registering consulta routes...');
 app.use('/api/consultas', consultaRoutes);
 console.log('Consulta routes registered successfully');
 
+console.log('Registering admin routes...');
+app.use('/api/admin', require('./routes/admin'));
+console.log('Admin routes registered successfully');
+
 console.log('Registering log routes...');
-app.use('/api/logs', logRoutes);
+app.use('/api/logs', require('./routes/logs'));
 console.log('Log routes registered successfully');
 
 console.log('Registering profile routes...');

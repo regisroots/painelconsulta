@@ -142,7 +142,7 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                       } else if (item.href === '#admin/modulos') {
                         window.location.href = '/admin/modulos';
                       } else if (item.href === '#admin/logs') {
-                        window.location.href = '/admin/dashboard';
+                        window.location.href = '/admin/logs';
                       } else if (item.href === '#admin/config') {
                         window.location.href = '/admin/dashboard';
                       }

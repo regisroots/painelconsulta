@@ -5,7 +5,6 @@ import { userAPI } from '../../services/api';
 import { 
   Users, 
   Plus, 
-  Edit3, 
   X,
   AlertCircle,
   CheckCircle,
@@ -13,7 +12,10 @@ import {
   UserCheck,
   Calendar,
   CreditCard,
-  Shield
+  Shield,
+  Clock,
+  Minus,
+  UserCog
 } from 'lucide-react';
 
 interface AdminUsersProps {
@@ -45,6 +47,14 @@ interface CreateUserForm {
   dias_ativos: number;
 }
 
+interface ModalState {
+  show: boolean;
+  type: 'credits' | 'days' | 'hours' | 'role' | 'ban' | null;
+  userId: number | null;
+  userName: string;
+  action: 'add' | 'remove' | 'change' | null;
+}
+
 export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,10 +67,27 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
     creditos: 0,
     dias_ativos: 30
   });
+  const [modal, setModal] = useState<ModalState>({
+    show: false,
+    type: null,
+    userId: null,
+    userName: '',
+    action: null
+  });
+  const [inputValue, setInputValue] = useState('');
 
   useEffect(() => {
     loadUsers();
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!showCreateForm && !loading && !modal.show) {
+        loadUsers();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [showCreateForm, loading, modal.show]);
 
   const loadUsers = async () => {
     try {
@@ -93,23 +120,88 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
     }
   };
 
-  const handleUpdateUser = async (userId: number, updates: Partial<UserData>) => {
+
+  const handleUnbanUser = async (userId: number) => {
     try {
-      await userAPI.updateUser(userId, updates);
+      await userAPI.unbanUser(userId);
       loadUsers();
     } catch (error) {
-      console.error('Erro ao atualizar usuário:', error);
-      alert('Erro ao atualizar usuário');
+      console.error('Erro ao desbanir usuário:', error);
+      alert('Erro ao desbanir usuário');
     }
   };
 
-  const handleBanUser = async (userId: number, motivo: string) => {
+  const openModal = (type: ModalState['type'], userId: number, userName: string, action: ModalState['action'] = null) => {
+    setModal({
+      show: true,
+      type,
+      userId,
+      userName,
+      action
+    });
+    setInputValue('');
+  };
+
+  const closeModal = () => {
+    setModal({
+      show: false,
+      type: null,
+      userId: null,
+      userName: '',
+      action: null
+    });
+    setInputValue('');
+  };
+
+  const handleModalSubmit = async () => {
+    if (!modal.userId || !inputValue) return;
+
     try {
-      await userAPI.banUser(userId, motivo);
+      const amount = parseInt(inputValue);
+      if (isNaN(amount) || amount <= 0) {
+        alert('Por favor, insira um valor válido');
+        return;
+      }
+
+      switch (modal.type) {
+        case 'credits':
+          if (modal.action === 'add') {
+            await userAPI.addCredits(modal.userId, amount);
+          } else {
+            await userAPI.removeCredits(modal.userId, amount);
+          }
+          break;
+        case 'days':
+          if (modal.action === 'add') {
+            await userAPI.addDays(modal.userId, amount);
+          } else {
+            await userAPI.removeDays(modal.userId, amount);
+          }
+          break;
+        case 'hours':
+          await userAPI.addHours(modal.userId, amount);
+          break;
+        case 'role':
+          if (!['admin', 'revendedor', 'usuario'].includes(inputValue)) {
+            alert('Role inválido');
+            return;
+          }
+          await userAPI.changeUserRole(modal.userId, inputValue);
+          break;
+        case 'ban':
+          if (!inputValue.trim()) {
+            alert('Motivo do banimento é obrigatório');
+            return;
+          }
+          await userAPI.banUser(modal.userId, inputValue);
+          break;
+      }
+
+      closeModal();
       loadUsers();
     } catch (error) {
-      console.error('Erro ao banir usuário:', error);
-      alert('Erro ao banir usuário');
+      console.error('Erro na operação:', error);
+      alert('Erro ao executar operação');
     }
   };
 
@@ -305,6 +397,7 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Status</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Créditos</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Criado em</th>
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Expira em</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Ações</th>
                   </tr>
                 </thead>
@@ -344,44 +437,94 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                         <div className="flex items-center justify-center space-x-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-600">
-                            {new Date(userData.data_criacao).toLocaleDateString('pt-BR')}
+                            {new Date(userData.data_criacao).toLocaleString('pt-BR')}
+                          </span>
+                        </div>
+                      </td>
+                      
+                      <td className="px-6 py-6 text-center">
+                        <div className="flex items-center justify-center space-x-2">
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-sm text-gray-600">
+                            {userData.data_expiracao ? new Date(userData.data_expiracao).toLocaleString('pt-BR') : 'Sem expiração'}
                           </span>
                         </div>
                       </td>
                       
                       <td className="px-6 py-6">
-                        <div className="flex items-center justify-center space-x-2">
+                        <div className="flex items-center justify-center space-x-1 flex-wrap gap-1">
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => openModal('credits', userData.id, userData.nome, 'add')}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                              title="Adicionar Créditos"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <CreditCard className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => openModal('credits', userData.id, userData.nome, 'remove')}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors"
+                              title="Remover Créditos"
+                            >
+                              <Minus className="w-3 h-3" />
+                              <CreditCard className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => openModal('days', userData.id, userData.nome, 'add')}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                              title="Adicionar Dias"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <Calendar className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => openModal('days', userData.id, userData.nome, 'remove')}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition-colors"
+                              title="Remover Dias"
+                            >
+                              <Minus className="w-3 h-3" />
+                              <Calendar className="w-3 h-3" />
+                            </button>
+                          </div>
+
                           <button
-                            onClick={() => {
-                              const creditos = prompt('Novos créditos:', userData.creditos?.toString() || '0');
-                              if (creditos !== null) {
-                                handleUpdateUser(userData.id, { creditos: parseInt(creditos) });
-                              }
-                            }}
-                            className="flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
+                            onClick={() => openModal('hours', userData.id, userData.nome, 'add')}
+                            className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
+                            title="Adicionar Horas"
                           >
-                            <Edit3 className="w-3 h-3" />
-                            <span>Editar Créditos</span>
+                            <Plus className="w-3 h-3" />
+                            <Clock className="w-3 h-3" />
                           </button>
+
+                          {user.tipo === 'admin' && (
+                            <button
+                              onClick={() => openModal('role', userData.id, userData.nome, 'change')}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
+                              title="Alterar Role"
+                            >
+                              <UserCog className="w-3 h-3" />
+                            </button>
+                          )}
                           
                           {!userData.banido ? (
                             <button
-                              onClick={() => {
-                                const motivo = prompt('Motivo do banimento:');
-                                if (motivo) handleBanUser(userData.id, motivo);
-                              }}
-                              className="flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                              onClick={() => openModal('ban', userData.id, userData.nome)}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                              title="Banir Usuário"
                             >
                               <Ban className="w-3 h-3" />
-                              <span>Banir</span>
                             </button>
                           ) : (
                             <button
-                              onClick={() => handleUpdateUser(userData.id, { banido: false, motivo_banimento: null })}
-                              className="flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                              onClick={() => handleUnbanUser(userData.id)}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 transition-colors"
+                              title="Desbanir Usuário"
                             >
                               <UserCheck className="w-3 h-3" />
-                              <span>Desbanir</span>
                             </button>
                           )}
                         </div>
@@ -390,6 +533,99 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {modal.show && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {modal.type === 'credits' && modal.action === 'add' && 'Adicionar Créditos'}
+                  {modal.type === 'credits' && modal.action === 'remove' && 'Remover Créditos'}
+                  {modal.type === 'days' && modal.action === 'add' && 'Adicionar Dias'}
+                  {modal.type === 'days' && modal.action === 'remove' && 'Remover Dias'}
+                  {modal.type === 'hours' && 'Adicionar Horas'}
+                  {modal.type === 'role' && 'Alterar Role'}
+                  {modal.type === 'ban' && 'Banir Usuário'}
+                </h3>
+                <button
+                  onClick={closeModal}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-600 mb-4">
+                  Usuário: <span className="font-semibold text-gray-900">{modal.userName}</span>
+                </p>
+
+                {modal.type === 'role' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Novo Role
+                    </label>
+                    <select
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Selecione um role</option>
+                      <option value="usuario">Cliente (Usuário)</option>
+                      <option value="revendedor">Revenda (Revendedor)</option>
+                      <option value="admin">Administrador</option>
+                    </select>
+                  </div>
+                ) : modal.type === 'ban' ? (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Motivo do Banimento
+                    </label>
+                    <textarea
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      rows={3}
+                      placeholder="Digite o motivo do banimento..."
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {modal.type === 'credits' && 'Quantidade de Créditos'}
+                      {modal.type === 'days' && 'Quantidade de Dias'}
+                      {modal.type === 'hours' && 'Quantidade de Horas'}
+                    </label>
+                    <input
+                      type="number"
+                      value={inputValue}
+                      onChange={(e) => setInputValue(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      min="1"
+                      placeholder="Digite a quantidade..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button
+                  onClick={closeModal}
+                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleModalSubmit}
+                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
+                  disabled={!inputValue}
+                >
+                  Confirmar
+                </button>
+              </div>
             </div>
           </div>
         )}
