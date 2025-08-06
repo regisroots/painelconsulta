@@ -12,7 +12,8 @@ import {
   FileText, 
   LogOut,
   Menu,
-  X
+  X,
+  BarChart3
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -33,6 +34,7 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
 
   const adminMenuItems = [
     { icon: Users, label: 'Usuários', href: '#admin/usuarios' },
+    { icon: BarChart3, label: 'Métricas', href: '#admin/metricas' },
     { icon: Database, label: 'Módulos', href: '#admin/modulos' },
     { icon: FileText, label: 'Logs', href: '#admin/logs' },
     { icon: Settings, label: 'Configurações', href: '#admin/config' },
@@ -135,6 +137,8 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                     onClick={() => {
                       if (item.href === '#admin/usuarios') {
                         window.location.href = '/admin/usuarios';
+                      } else if (item.href === '#admin/metricas') {
+                        window.location.href = '/admin/metricas';
                       } else if (item.href === '#admin/modulos') {
                         window.location.href = '/admin/modulos';
                       } else if (item.href === '#admin/logs') {

@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models');
+const { User, sequelize } = require('../models');
+const { Op } = require('sequelize');
 const { logAdminAction, logRevendedorAction, LogService } = require('../services/logService');
 
 const getUsers = async (req, res) => {
@@ -307,6 +308,62 @@ const register = async (req, res) => {
   }
 };
 
+const getUserMetrics = async (req, res) => {
+  try {
+    const { startDate, endDate, revendedorId } = req.query;
+    
+    const whereConditions = {};
+    if (startDate && endDate) {
+      whereConditions.data_criacao = {
+        [Op.between]: [new Date(startDate), new Date(endDate)]
+      };
+    }
+    
+    if (req.user.tipo === 'revendedor') {
+      whereConditions.revendedor_id = req.user.id;
+    } else if (revendedorId) {
+      whereConditions.revendedor_id = revendedorId;
+    }
+
+    const usersByReseller = await User.findAll({
+      attributes: [
+        'revendedor_id',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'total_users'],
+        [sequelize.fn('DATE', sequelize.col('data_criacao')), 'creation_date']
+      ],
+      where: whereConditions,
+      include: [{
+        model: User,
+        as: 'revendedor',
+        attributes: ['id', 'nome', 'email'],
+        required: false
+      }],
+      group: ['revendedor_id', 'revendedor.id', 'creation_date'],
+      order: [['creation_date', 'DESC']]
+    });
+
+    const totalMetrics = await User.findAll({
+      attributes: [
+        [sequelize.fn('COUNT', sequelize.col('id')), 'total_users'],
+        [sequelize.fn('COUNT', sequelize.literal('CASE WHEN ativo = true THEN 1 END')), 'active_users'],
+        [sequelize.fn('COUNT', sequelize.literal('CASE WHEN tipo = \'revendedor\' THEN 1 END')), 'total_resellers']
+      ],
+      where: whereConditions,
+      raw: true
+    });
+
+    res.json({
+      usersByReseller,
+      totalMetrics: totalMetrics[0],
+      dateRange: { startDate, endDate }
+    });
+
+  } catch (error) {
+    console.error('Erro ao buscar métricas de usuários:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
 module.exports = {
   getUsers,
   createUser,
@@ -314,4 +371,5 @@ module.exports = {
   banUser,
   login,
   register,
+  getUserMetrics,
 };
