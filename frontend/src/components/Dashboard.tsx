@@ -1,26 +1,23 @@
 import { useState, useEffect } from 'react';
 import { User, Modulo } from '../types';
-import { moduloAPI } from '../services/api';
+import { moduloAPI, profileAPI } from '../services/api';
 import ConsultaInterface from './ConsultaInterface';
 
 interface DashboardProps {
   user: User;
   onLogout: () => void;
+  onUserUpdate?: (user: User) => void;
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModulo, setSelectedModulo] = useState<Modulo | null>(null);
+  const [currentUser, setCurrentUser] = useState<User>(user);
 
   useEffect(() => {
     loadModulos();
-    
-    const interval = setInterval(() => {
-      loadModulos();
-    }, 30000);
-    
-    return () => clearInterval(interval);
+    loadUserData();
   }, [user]);
 
   const loadModulos = async () => {
@@ -35,9 +32,23 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   };
 
+  const loadUserData = async () => {
+    try {
+      const response = await profileAPI.getProfile();
+      const userData = response.user || response;
+      setCurrentUser(userData);
+      if (onUserUpdate) {
+        onUserUpdate(userData);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados do usuário:', error);
+      setCurrentUser(user);
+    }
+  };
 
-  const diasRestantes = user.data_expiracao 
-    ? Math.ceil((new Date(user.data_expiracao).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+
+  const diasRestantes = currentUser.data_expiracao 
+    ? Math.ceil((new Date(currentUser.data_expiracao).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
 
   if (selectedModulo) {
@@ -314,7 +325,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   <div className="absolute top-4 right-6 z-10 text-right">
                     <div className="mb-2">
                       {(() => {
-                        const moduloConfig = user.modulos?.[modulo.id] || { limite: 0, usado: 0 };
+                        const moduloConfig = currentUser.modulos?.[modulo.id] || { limite: 0, usado: 0 };
                         const remaining = modulo.tipo_limite === 'quantidade' 
                           ? Math.max(0, moduloConfig.limite - moduloConfig.usado)
                           : 'Ilimitado';

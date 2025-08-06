@@ -140,7 +140,7 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
       timeout_segundos: modulo.timeout_segundos || 30,
       ativo: modulo.ativo,
       manutencao: modulo.manutencao || false,
-      limite_padrao_quantidade: 1000
+      limite_padrao_quantidade: (modulo as any).limite_padrao_quantidade || 1000
     });
   };
 

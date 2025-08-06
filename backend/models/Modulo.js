@@ -52,10 +52,10 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: 30,
     },
-    timeout_segundos: {
+    limite_padrao_quantidade: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      defaultValue: 30,
+      allowNull: true,
+      defaultValue: 1000,
     },
   }, {
     tableName: 'modulos',

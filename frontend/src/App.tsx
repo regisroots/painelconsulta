@@ -61,7 +61,7 @@ function App() {
           path="/" 
           element={
             user ? (
-              <Dashboard user={user} onLogout={handleLogout} />
+              <Dashboard user={user} onLogout={handleLogout} onUserUpdate={setUser} />
             ) : (
               <Navigate to="/login" replace />
             )

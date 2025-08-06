@@ -35,29 +35,29 @@ app.use(cors({
   credentials: true,
 }));
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests por IP por janela
-  message: {
-    error: 'Muitas tentativas. Tente novamente em 15 minutos.',
-  },
-});
-app.use(limiter);
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: 100, // máximo 100 requests por IP por janela
+//   message: {
+//     error: 'Muitas tentativas. Tente novamente em 15 minutos.',
+//   },
+// });
+// app.use(limiter);
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutos
-  max: process.env.NODE_ENV === 'production' ? 5 : 100, // 100 tentativas em dev, 5 em produção
-  message: {
-    error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
-  },
-});
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: process.env.NODE_ENV === 'production' ? 5 : 100, // 100 tentativas em dev, 5 em produção
+//   message: {
+//     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
+//   },
+// });
 
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 console.log('Registering auth routes...');
-app.use('/api/auth', loginLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 console.log('Auth routes registered successfully');
 
 console.log('Registering user routes...');

@@ -67,7 +67,7 @@ const createModulo = async (req, res) => {
 const updateModulo = async (req, res) => {
   try {
     const { id } = req.params;
-    const { nome, descricao, ativo, tipo_limite, preco_por_consulta, api_url, campos_entrada } = req.body;
+    const { nome, descricao, ativo, tipo_limite, preco_por_consulta, api_url, campos_entrada, timeout_segundos, manutencao, limite_padrao_quantidade } = req.body;
 
     const modulo = await Modulo.findByPk(id);
     if (!modulo) {
@@ -77,12 +77,31 @@ const updateModulo = async (req, res) => {
     if (nome) modulo.nome = nome;
     if (descricao !== undefined) modulo.descricao = descricao;
     if (typeof ativo === 'boolean') modulo.ativo = ativo;
+    if (typeof manutencao === 'boolean') modulo.manutencao = manutencao;
     if (tipo_limite) modulo.tipo_limite = tipo_limite;
     if (preco_por_consulta !== undefined) modulo.preco_por_consulta = preco_por_consulta;
+    if (timeout_segundos !== undefined) modulo.timeout_segundos = timeout_segundos;
     if (api_url) modulo.api_url = api_url;
     if (campos_entrada) modulo.campos_entrada = campos_entrada;
+    if (limite_padrao_quantidade !== undefined) modulo.limite_padrao_quantidade = limite_padrao_quantidade;
 
     await modulo.save();
+
+    if (tipo_limite === 'quantidade' && limite_padrao_quantidade !== undefined) {
+      const { User } = require('../models');
+      const users = await User.findAll();
+      
+      for (const user of users) {
+        const userModulos = user.modulos || {};
+        if (!userModulos[id]) {
+          userModulos[id] = { limite: limite_padrao_quantidade, usado: 0 };
+        } else {
+          userModulos[id].limite = limite_padrao_quantidade;
+        }
+        user.modulos = userModulos;
+        await user.save();
+      }
+    }
 
     await logAdminAction(req.user.id, 'Módulo atualizado', { 
       modulo_id: id,

@@ -26,4 +26,8 @@ router.post('/:id/hours/add', requireRole(['admin', 'revendedor']), addHours);
 router.put('/:id/role', requireRole(['admin']), changeUserRole);
 router.post('/:id/module-limit', requireRole(['admin']), setUserModuleLimit);
 
+router.get('/me', (req, res) => {
+  res.json({ user: req.user });
+});
+
 module.exports = router;
