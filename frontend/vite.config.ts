@@ -15,10 +15,6 @@ export default defineConfig({
       overlay: false
     }
   },
-  optimizeDeps: {
-    force: true,
-    disabled: false
-  },
   build: {
     rollupOptions: {
       output: {
