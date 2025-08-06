@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { User, Modulo } from '../../types';
 import Layout from '../Layout';
-import { moduloAPI, uploadAPI } from '../../services/api';
+import { moduloAPI } from '../../services/api';
 import { 
   Database, 
   Settings, 
@@ -15,8 +15,7 @@ import {
   Power,
   Plus,
   Trash2,
-  Globe,
-  Upload
+  Globe
 } from 'lucide-react';
 
 interface AdminModulesProps {
@@ -40,8 +39,6 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
   const [editingTimeout, setEditingTimeout] = useState<number | null>(null);
   const [tempTimeout, setTempTimeout] = useState<string>('');
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingModule, setEditingModule] = useState<Modulo | null>(null);
-  const [uploadingIcon, setUploadingIcon] = useState<number | null>(null);
   const [createForm, setCreateForm] = useState<CreateModuleForm>({
     nome: '',
     descricao: '',
@@ -137,61 +134,6 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
         console.error('Erro ao deletar módulo:', error);
         alert('Erro ao deletar módulo');
       }
-    }
-  };
-
-  const handleEditModule = (modulo: Modulo) => {
-    if (user.tipo !== 'admin') {
-      alert('Apenas administradores podem editar módulos');
-      return;
-    }
-    setEditingModule(modulo);
-  };
-
-  const handleSaveModule = async () => {
-    if (!editingModule) return;
-    
-    try {
-      await moduloAPI.update(editingModule.id, {
-        nome: editingModule.nome,
-        descricao: editingModule.descricao,
-        api_url: editingModule.api_url,
-        tipo_limite: editingModule.tipo_limite,
-        preco_por_consulta: editingModule.preco_por_consulta,
-        timeout_segundos: editingModule.timeout_segundos
-      });
-      setEditingModule(null);
-      loadModulos();
-      alert('Módulo atualizado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao salvar módulo:', error);
-      alert('Erro ao salvar módulo');
-    }
-  };
-
-  const handleIconUpload = async (moduleId: number, file: File) => {
-    if (user.tipo !== 'admin') {
-      alert('Apenas administradores podem alterar ícones');
-      return;
-    }
-
-    if (!file.type.startsWith('image/')) {
-      alert('Por favor, selecione apenas arquivos de imagem');
-      return;
-    }
-
-    try {
-      setUploadingIcon(moduleId);
-      const response = await uploadAPI.uploadModuleImage(file);
-      
-      await moduloAPI.update(moduleId, { icone: response.filename });
-      loadModulos();
-      alert('Ícone atualizado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao fazer upload do ícone:', error);
-      alert('Erro ao fazer upload do ícone');
-    } finally {
-      setUploadingIcon(null);
     }
   };
 
@@ -509,42 +451,7 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
                             <Settings className="w-3 h-3" />
                             <span>{modulo.manutencao ? 'Manutenção' : 'Normal'}</span>
                           </button>
-
-                          {user.tipo === 'admin' && (
-                            <>
-                              <button
-                                onClick={() => handleEditModule(modulo)}
-                                className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-                              >
-                                <Edit3 className="w-3 h-3" />
-                                <span>Editar</span>
-                              </button>
-                              
-                              <label className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-orange-100 text-orange-700 hover:bg-orange-200 transition-colors cursor-pointer">
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  className="hidden"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handleIconUpload(modulo.id, file);
-                                  }}
-                                  disabled={uploadingIcon === modulo.id}
-                                />
-                                {uploadingIcon === modulo.id ? (
-                                  <>
-                                    <div className="w-3 h-3 border border-orange-700 border-t-transparent rounded-full animate-spin" />
-                                    <span>Enviando...</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Upload className="w-3 h-3" />
-                                    <span>Ícone</span>
-                                  </>
-                                )}
-                              </label>
-                            </>
-                          )}
+                          
                           
                           <button
                             onClick={() => handleDeleteModule(modulo.id)}
@@ -562,126 +469,6 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
             </div>
           </div>
       </div>
-
-        {/* Module Editing Modal */}
-        {editingModule && user.tipo === 'admin' && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Editar Módulo - {editingModule.nome}
-                </h3>
-                <button
-                  onClick={() => setEditingModule(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome do Módulo
-                    </label>
-                    <input
-                      type="text"
-                      value={editingModule.nome}
-                      onChange={(e) => setEditingModule({ ...editingModule, nome: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Tipo de Limite
-                    </label>
-                    <select
-                      value={editingModule.tipo_limite}
-                      onChange={(e) => setEditingModule({ ...editingModule, tipo_limite: e.target.value as 'creditos' | 'quantidade' })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    >
-                      <option value="creditos">Créditos</option>
-                      <option value="quantidade">Quantidade</option>
-                    </select>
-                  </div>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descrição
-                  </label>
-                  <textarea
-                    value={editingModule.descricao}
-                    onChange={(e) => setEditingModule({ ...editingModule, descricao: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    URL da API
-                  </label>
-                  <input
-                    type="url"
-                    value={editingModule.api_url}
-                    onChange={(e) => setEditingModule({ ...editingModule, api_url: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    placeholder="https://api.exemplo.com/consulta/{parametro}"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Preço por Consulta
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editingModule.preco_por_consulta}
-                      onChange={(e) => setEditingModule({ ...editingModule, preco_por_consulta: parseFloat(e.target.value) || 0 })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Timeout (segundos)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="300"
-                      value={editingModule.timeout_segundos}
-                      onChange={(e) => setEditingModule({ ...editingModule, timeout_segundos: parseInt(e.target.value) || 30 })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={() => setEditingModule(null)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveModule}
-                  className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors shadow-lg flex items-center space-x-2"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Salvar Alterações</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
     </Layout>
   );
 }

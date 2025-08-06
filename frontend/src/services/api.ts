@@ -53,12 +53,6 @@ export const userAPI = {
   
   banUser: (id: number, motivo: string) =>
     api.post(`/users/${id}/ban`, { motivo }).then(res => res.data),
-  
-  updateUserPlan: (userId: number, planData: { days?: number; hours?: number }) =>
-    api.put(`/users/${userId}/plan`, planData).then(res => res.data),
-  
-  updateUserRole: (userId: number, roleData: { tipo: string }) =>
-    api.put(`/users/${userId}`, roleData).then(res => res.data),
 };
 
 export const moduloAPI = {
@@ -76,7 +70,7 @@ export const consultaAPI = {
     api.post('/consultas', { modulo_id: moduloId, input }).then(res => res.data),
   
   getConsultas: (): Promise<Consulta[]> =>
-    api.get('/consultas').then(res => res.data.consultas || res.data || []),
+    api.get('/consultas').then(res => res.data),
   
   getConsultaById: (id: number): Promise<Consulta> =>
     api.get(`/consultas/${id}`).then(res => res.data),
@@ -100,7 +94,6 @@ export const profileAPI = {
   changePassword: (senhaAtual: string, novaSenha: string) =>
     api.post('/profile/change-password', { senhaAtual, novaSenha }).then(res => res.data),
 };
-
 
 export const uploadAPI = {
   uploadModuleImage: (file: File) => {

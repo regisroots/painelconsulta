@@ -13,8 +13,7 @@ import {
   UserCheck,
   Calendar,
   CreditCard,
-  Shield,
-  Clock
+  Shield
 } from 'lucide-react';
 
 interface AdminUsersProps {
@@ -50,10 +49,6 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [editingPlan, setEditingPlan] = useState<{ userId: number; nome: string } | null>(null);
-  const [planForm, setPlanForm] = useState({ days: 0, hours: 0 });
-  const [editingRole, setEditingRole] = useState<{ userId: number; nome: string; currentRole: string } | null>(null);
-  const [newRole, setNewRole] = useState<string>('');
   const [createForm, setCreateForm] = useState<CreateUserForm>({
     nome: '',
     email: '',
@@ -116,65 +111,6 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
       console.error('Erro ao banir usuário:', error);
       alert('Erro ao banir usuário');
     }
-  };
-
-  const handleEditPlan = (userData: UserData) => {
-    setEditingPlan({ userId: userData.id, nome: userData.nome });
-    setPlanForm({ days: 0, hours: 0 });
-  };
-
-  const handleSavePlan = async () => {
-    if (!editingPlan) return;
-    
-    if (user.tipo !== 'admin' && user.tipo !== 'revendedor') {
-      alert('Acesso negado');
-      return;
-    }
-    
-    try {
-      await userAPI.updateUserPlan(editingPlan.userId, planForm);
-      setEditingPlan(null);
-      setPlanForm({ days: 0, hours: 0 });
-      loadUsers();
-      alert('Plano atualizado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar plano:', error);
-      alert('Erro ao atualizar plano do usuário');
-    }
-  };
-
-  const handleEditRole = (userData: UserData) => {
-    if (user.tipo !== 'admin') {
-      alert('Apenas administradores podem alterar roles de usuários');
-      return;
-    }
-    setEditingRole({ userId: userData.id, nome: userData.nome, currentRole: userData.tipo });
-    setNewRole(userData.tipo);
-  };
-
-  const handleSaveRole = async () => {
-    if (!editingRole) return;
-    
-    if (user.tipo !== 'admin') {
-      alert('Apenas administradores podem alterar roles');
-      return;
-    }
-    
-    try {
-      await userAPI.updateUser(editingRole.userId, { tipo: newRole });
-      setEditingRole(null);
-      setNewRole('');
-      loadUsers();
-      alert('Role do usuário atualizada com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar role:', error);
-      alert('Erro ao atualizar role do usuário');
-    }
-  };
-
-  const formatExpirationDate = (dateString: string | null) => {
-    if (!dateString) return 'Sem data';
-    return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
   const getStatusBadge = (userData: UserData) => {
@@ -368,7 +304,6 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Tipo</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Status</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Créditos</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Expiração</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Criado em</th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Ações</th>
                   </tr>
@@ -409,42 +344,13 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                         <div className="flex items-center justify-center space-x-2">
                           <Calendar className="w-4 h-4 text-gray-400" />
                           <span className="text-sm text-gray-600">
-                            {formatExpirationDate(userData.data_expiracao)}
-                          </span>
-                        </div>
-                      </td>
-                      
-                      <td className="px-6 py-6 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <Calendar className="w-4 h-4 text-gray-400" />
-                          <span className="text-sm text-gray-600">
                             {new Date(userData.data_criacao).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
                       </td>
                       
                       <td className="px-6 py-6">
-                        <div className="flex items-center justify-center space-x-2 flex-wrap gap-1">
-                          {(user.tipo === 'admin' || user.tipo === 'revendedor') && (
-                            <button
-                              onClick={() => handleEditPlan(userData)}
-                              className="flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-                            >
-                              <Clock className="w-3 h-3" />
-                              <span>Editar Plano</span>
-                            </button>
-                          )}
-
-                          {user.tipo === 'admin' && (
-                            <button
-                              onClick={() => handleEditRole(userData)}
-                              className="flex items-center space-x-1 px-3 py-1 rounded-lg text-xs font-medium bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors"
-                            >
-                              <Shield className="w-3 h-3" />
-                              <span>Alterar Role</span>
-                            </button>
-                          )}
-                          
+                        <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => {
                               const creditos = prompt('Novos créditos:', userData.creditos?.toString() || '0');
@@ -484,136 +390,6 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
-        )}
-
-        {/* Plan Editing Modal */}
-        {editingPlan && (user.tipo === 'admin' || user.tipo === 'revendedor') && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Editar Plano - {editingPlan.nome}
-                </h3>
-                <button
-                  onClick={() => setEditingPlan(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adicionar/Remover Dias
-                  </label>
-                  <input
-                    type="number"
-                    value={planForm.days}
-                    onChange={(e) => setPlanForm({ ...planForm, days: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ex: 30 (adicionar) ou -7 (remover)"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Use números positivos para adicionar dias, negativos para remover
-                  </p>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Adicionar/Remover Horas
-                  </label>
-                  <input
-                    type="number"
-                    value={planForm.hours}
-                    onChange={(e) => setPlanForm({ ...planForm, hours: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Ex: 24 (adicionar) ou -12 (remover)"
-                  />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Use números positivos para adicionar horas, negativos para remover
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={() => setEditingPlan(null)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSavePlan}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors shadow-lg"
-                >
-                  Salvar Alterações
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Role Editing Modal */}
-        {editingRole && user.tipo === 'admin' && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  Alterar Role - {editingRole.nome}
-                </h3>
-                <button
-                  onClick={() => setEditingRole(null)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Role Atual: <span className="font-semibold capitalize">{editingRole.currentRole}</span>
-                  </label>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nova Role
-                  </label>
-                  <select
-                    value={newRole}
-                    onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="usuario">Cliente</option>
-                    <option value="revendedor">Revendedor</option>
-                    <option value="admin">Administrador</option>
-                  </select>
-                  <p className="text-xs text-gray-500 mt-2">
-                    <strong>Cliente:</strong> Acesso apenas com tempo válido<br/>
-                    <strong>Revendedor:</strong> Acesso mesmo com tempo expirado<br/>
-                    <strong>Admin:</strong> Acesso total ao sistema
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-4 mt-8">
-                <button
-                  onClick={() => setEditingRole(null)}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleSaveRole}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-lg"
-                >
-                  Alterar Role
-                </button>
-              </div>
             </div>
           </div>
         )}
