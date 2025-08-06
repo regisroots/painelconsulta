@@ -87,18 +87,6 @@ export default function Profile({ user, onUserUpdate }: ProfileProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex-1"></div>
-          <button
-            onClick={() => window.location.href = '/'}
-            className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            <span>Voltar ao Dashboard</span>
-          </button>
-        </div>
         <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-10">
           <div className="text-center mb-10">
             <div className="w-24 h-24 bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-xl mx-auto mb-6">
