@@ -97,10 +97,6 @@ const updateUser = async (req, res) => {
     const { id } = req.params;
     const { nome, email, tipo, dias_ativos, creditos, ativo } = req.body;
 
-    if (tipo && req.user.tipo !== 'admin') {
-      return res.status(403).json({ error: 'Apenas administradores podem alterar roles' });
-    }
-
     const user = await User.findByPk(id);
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
