@@ -11,7 +11,8 @@ const getAdminStats = async (req, res) => {
           { data_expiracao: { [Op.gt]: new Date() } },
           { data_expiracao: null }
         ],
-        status: 'ativo'
+        ativo: true,
+        banido: false
       }
     });
 

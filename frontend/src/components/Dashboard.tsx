@@ -12,18 +12,12 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModulo, setSelectedModulo] = useState<Modulo | null>(null);
-  const [stats, setStats] = useState({
-    creditos: 0,
-    consultasRealizadas: 0,
-    diasAtivos: 0
-  });
 
   useEffect(() => {
     loadModulos();
-    loadStats();
     
     const interval = setInterval(() => {
-      loadStats();
+      loadModulos();
     }, 30000);
     
     return () => clearInterval(interval);
@@ -41,19 +35,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     }
   };
 
-  const loadStats = async () => {
-    try {
-      const response = await fetch('/api/users/metrics', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      const data = await response.json();
-      setStats(data);
-    } catch (error) {
-      console.error('Erro ao carregar estatísticas:', error);
-    }
-  };
 
   const diasRestantes = user.data_expiracao 
     ? Math.ceil((new Date(user.data_expiracao).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
@@ -269,45 +250,6 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
           </div>
-
-          <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/30 p-8 hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <p className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">
-                  Limites dos Módulos
-                </p>
-                <div className="space-y-3">
-                  {modulos.length > 0 ? (
-                    modulos.map((modulo) => {
-                      const moduloConfig = user.modulos?.[modulo.id] || { limite: 0, usado: 0 };
-                      const remaining = modulo.tipo_limite === 'quantidade' 
-                        ? Math.max(0, moduloConfig.limite - moduloConfig.usado)
-                        : 'Ilimitado';
-                      
-                      return (
-                        <div key={modulo.id} className="flex justify-between items-center">
-                          <span className="text-xs text-gray-600 font-medium">{modulo.nome}:</span>
-                          <span className="text-sm font-bold text-gray-900">
-                            {modulo.tipo_limite === 'quantidade' ? `${remaining}/${moduloConfig.limite}` : remaining}
-                          </span>
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <div className="text-center text-gray-500 text-sm">
-                      Carregando módulos...
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="w-16 h-16 bg-gradient-to-r from-purple-400 via-pink-500 to-purple-600 rounded-3xl flex items-center justify-center shadow-xl group-hover:shadow-2xl transition-shadow ml-4">
-                <svg className="h-8 w-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 00-2-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-            </div>
-          </div>
-          
         </div>
 
         {/* Enhanced Services Section */}
@@ -368,14 +310,30 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   {/* Enhanced Background Gradient */}
                   <div className="absolute inset-0 bg-gradient-to-br from-blue-50/70 via-indigo-50/70 to-purple-50/70 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
                   
-                  {/* Enhanced Status Badge */}
-                  <div className="absolute top-6 right-6 z-10">
+                  {/* Module Limit Display */}
+                  <div className="absolute top-4 right-6 z-10 text-right">
+                    <div className="mb-2">
+                      {(() => {
+                        const moduloConfig = user.modulos?.[modulo.id] || { limite: 0, usado: 0 };
+                        const remaining = modulo.tipo_limite === 'quantidade' 
+                          ? Math.max(0, moduloConfig.limite - moduloConfig.usado)
+                          : 'Ilimitado';
+                        
+                        return (
+                          <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200 shadow-lg">
+                            <span className="text-xs font-bold text-gray-700">
+                              {modulo.tipo_limite === 'quantidade' ? `${remaining}/${moduloConfig.limite}` : remaining}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </div>
                     <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-xl backdrop-blur-sm ${
                       modulo.ativo && !modulo.manutencao
                         ? 'bg-green-500/90 text-white border border-green-400'
                         : 'bg-red-500/90 text-white border border-red-400'
                     }`}>
-                      {modulo.ativo && !modulo.manutencao ? 'ONLINE' : 'OFFLINE'}
+                      {modulo.ativo && !modulo.manutencao ? 'Online' : 'Offline'}
                     </span>
                   </div>
 
