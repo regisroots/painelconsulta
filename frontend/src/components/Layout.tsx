@@ -172,25 +172,25 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top bar */}
-        <header className="h-12 bg-background border-b border-gray-200 flex items-center justify-between px-6 sticky top-0 z-10">
+        <header className="h-8 bg-background border-b border-gray-200 flex items-center justify-between px-4 sticky top-0 z-10">
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden"
+            className="lg:hidden h-6 w-6"
             onClick={() => setSidebarOpen(true)}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </Button>
           
           <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs text-muted-foreground">
               Bem-vindo, {user.nome}
             </div>
           </div>
         </header>
 
         {/* Page content */}
-        <main className="p-2">
+        <main className="p-1">
           {children}
         </main>
       </div>
