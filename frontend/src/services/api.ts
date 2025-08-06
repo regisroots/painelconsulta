@@ -53,13 +53,13 @@ export const userAPI = {
 };
 
 export const moduloAPI = {
-  getAtivos: () => api.get('/modulos/ativos'),
-  getAll: () => api.get('/modulos'),
-  create: (data: any) => api.post('/modulos', data),
-  update: (id: number, data: any) => api.put(`/modulos/${id}`, data),
-  updateTimeout: (id: number, timeout_segundos: number) => api.put(`/modulos/${id}/timeout`, { timeout_segundos }),
-  updateStatus: (id: number, data: { ativo?: boolean; manutencao?: boolean }) => api.put(`/modulos/${id}/status`, data),
-  delete: (id: number) => api.delete(`/modulos/${id}`),
+  getAtivos: () => api.get('/modulos/ativos').then(res => res.data),
+  getAll: () => api.get('/modulos').then(res => res.data),
+  create: (data: any) => api.post('/modulos', data).then(res => res.data),
+  update: (id: number, data: any) => api.put(`/modulos/${id}`, data).then(res => res.data),
+  updateTimeout: (id: number, timeout_segundos: number) => api.put(`/modulos/${id}/timeout`, { timeout_segundos }).then(res => res.data),
+  updateStatus: (id: number, data: { ativo?: boolean; manutencao?: boolean }) => api.put(`/modulos/${id}/status`, data).then(res => res.data),
+  delete: (id: number) => api.delete(`/modulos/${id}`).then(res => res.data),
 };
 
 export const consultaAPI = {

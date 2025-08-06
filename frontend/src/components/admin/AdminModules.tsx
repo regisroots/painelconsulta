@@ -32,8 +32,8 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
 
   const loadModulos = async () => {
     try {
-      const data = await moduloAPI.getAll();
-      const modulosArray = Array.isArray(data) ? data : (data as any).modulos || [];
+      const response = await moduloAPI.getAll();
+      const modulosArray = response.modulos || [];
       setModulos(modulosArray);
     } catch (error) {
       console.error('Erro ao carregar módulos:', error);
@@ -55,15 +55,7 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
         return;
       }
 
-      await fetch(`http://localhost:3000/api/modulos/${moduloId}/timeout`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ timeout_segundos: timeoutValue })
-      });
-
+      await moduloAPI.updateTimeout(moduloId, timeoutValue);
       setEditingTimeout(null);
       loadModulos();
     } catch (error) {
@@ -80,16 +72,7 @@ export default function AdminModules({ user, onLogout }: AdminModulesProps) {
   const handleStatusToggle = async (moduloId: number, field: 'ativo' | 'manutencao', currentValue: boolean) => {
     try {
       const updateData = { [field]: !currentValue };
-      
-      await fetch(`http://localhost:3000/api/modulos/${moduloId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(updateData)
-      });
-
+      await moduloAPI.updateStatus(moduloId, updateData);
       loadModulos();
     } catch (error) {
       console.error('Erro ao atualizar status:', error);
