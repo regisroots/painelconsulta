@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { User } from '../types';
 import { profileAPI } from '../services/api';
-import { MessageSquare, Phone, Save, User as UserIcon, Settings } from 'lucide-react';
+import { MessageSquare, Phone, Save, User as UserIcon, Settings, History } from 'lucide-react';
+import ConsultationHistory from './ConsultationHistory';
 
 interface ProfileProps {
   user: User;
@@ -19,6 +20,7 @@ export default function Profile({ user, onUserUpdate }: ProfileProps) {
     confirmarSenha: '',
   });
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [showConsultationHistory, setShowConsultationHistory] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
@@ -77,6 +79,10 @@ export default function Profile({ user, onUserUpdate }: ProfileProps) {
       [e.target.name]: e.target.value,
     });
   };
+
+  if (showConsultationHistory) {
+    return <ConsultationHistory onBack={() => setShowConsultationHistory(false)} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -268,6 +274,25 @@ export default function Profile({ user, onUserUpdate }: ProfileProps) {
                   </div>
                 </form>
               )}
+            </div>
+
+            <div className="bg-gradient-to-r from-green-50 via-teal-50 to-cyan-50 rounded-2xl p-8 border-2 border-green-100">
+              <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <History className="w-5 h-5 mr-2 text-green-600" />
+                Histórico de Atividades
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Visualize todas as suas consultas realizadas com data e horário detalhados.
+              </p>
+              
+              <button
+                type="button"
+                onClick={() => setShowConsultationHistory(true)}
+                className="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <History className="w-4 h-4" />
+                <span>Ver Histórico de Consultas</span>
+              </button>
             </div>
 
             <div className="flex justify-center">
