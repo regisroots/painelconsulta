@@ -108,7 +108,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         </div>
 
         {/* Reseller Contact Information */}
-        {user.tipo === 'usuario' && user.revendedor && (
+        {false && user.tipo === 'usuario' && (user as any).revendedor && (
           <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/30 p-8 mb-12">
             <div className="text-center">
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
@@ -116,21 +116,21 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </h3>
               <div className="flex items-center justify-center space-x-4 mb-6">
                 <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                  {user.revendedor.nome.charAt(0).toUpperCase()}
+                  {(user as any).revendedor.nome.charAt(0).toUpperCase()}
                 </div>
                 <div className="text-left">
                   <p className="text-xl font-semibold text-gray-900">
-                    {user.revendedor.nome}
+                    {(user as any).revendedor.nome}
                   </p>
-                  <p className="text-gray-600">{user.revendedor.email}</p>
+                  <p className="text-gray-600">{(user as any).revendedor.email}</p>
                 </div>
               </div>
               
-              {(user.revendedor.whatsapp_contato || user.revendedor.telegram_contato) && (
+              {((user as any).revendedor.whatsapp_contato || (user as any).revendedor.telegram_contato) && (
                 <div className="flex items-center justify-center space-x-4">
-                  {user.revendedor.whatsapp_contato && (
+                  {(user as any).revendedor.whatsapp_contato && (
                     <a
-                      href={`https://wa.me/${user.revendedor.whatsapp_contato.replace(/\D/g, '')}`}
+                      href={`https://wa.me/${(user as any).revendedor.whatsapp_contato.replace(/\D/g, '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center space-x-2 bg-green-500 text-white px-4 py-2 rounded-xl hover:bg-green-600 transition-colors shadow-lg"
@@ -142,9 +142,9 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                     </a>
                   )}
                   
-                  {user.revendedor.telegram_contato && (
+                  {(user as any).revendedor.telegram_contato && (
                     <a
-                      href={`https://t.me/${user.revendedor.telegram_contato.replace('@', '')}`}
+                      href={`https://t.me/${(user as any).revendedor.telegram_contato.replace('@', '')}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-xl hover:bg-blue-600 transition-colors shadow-lg"
@@ -162,7 +162,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         )}
 
         {/* Enhanced Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
           <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/30 p-8 hover:shadow-2xl hover:scale-105 transition-all duration-300 group">
             <div className="flex items-center justify-between">
               <div>
