@@ -37,7 +37,7 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
         if (entries.length === 0) return '-';
         return entries
           .map(([k, v]) => `${formatFieldName(k)}: ${v === null || v === undefined ? '-' : String(v)}`)
-          .join(', ');
+          .join(' • ');
       }
     }
     return String(value);
@@ -113,9 +113,12 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
   };
 
   const renderPrimitiveSection = (sectionData: any, sectionTitle: string) => (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <div className="bg-blue-900 text-white px-6 py-4">
-        <h3 className="text-lg font-semibold">{sectionTitle}</h3>
+    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4">
+        <h3 className="text-lg font-semibold flex items-center">
+          <div className="w-3 h-3 bg-white rounded-full mr-3 opacity-90"></div>
+          {sectionTitle}
+        </h3>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full">
@@ -153,10 +156,13 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
       const headers = Object.keys(firstItem);
       
       return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">{sectionTitle}</h3>
-            <span className="bg-blue-800 text-white px-3 py-1 rounded-full text-sm font-medium">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-semibold flex items-center">
+              <div className="w-3 h-3 bg-white rounded-full mr-3 opacity-90"></div>
+              {sectionTitle}
+            </h3>
+            <span className="bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
               {sectionData.length} item(s)
             </span>
           </div>
@@ -197,10 +203,13 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
       );
     } else {
       return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-blue-900 text-white px-6 py-4 flex justify-between items-center">
-            <h3 className="text-lg font-semibold">{sectionTitle}</h3>
-            <span className="bg-blue-800 text-white px-3 py-1 rounded-full text-sm font-medium">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4 flex justify-between items-center">
+            <h3 className="text-lg font-semibold flex items-center">
+              <div className="w-3 h-3 bg-white rounded-full mr-3 opacity-90"></div>
+              {sectionTitle}
+            </h3>
+            <span className="bg-blue-700 text-white px-4 py-2 rounded-full text-sm font-medium shadow-md">
               {sectionData.length} item(s)
             </span>
           </div>
@@ -227,9 +236,12 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
     
     if (hasArrays) {
       return (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="bg-blue-900 text-white px-6 py-4">
-            <h3 className="text-lg font-semibold">{sectionTitle}</h3>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow duration-300">
+          <div className="bg-gradient-to-r from-blue-900 to-blue-800 text-white px-6 py-4">
+            <h3 className="text-lg font-semibold flex items-center">
+              <div className="w-3 h-3 bg-white rounded-full mr-3 opacity-90"></div>
+              {sectionTitle}
+            </h3>
           </div>
           <div className="space-y-4 p-6">
             {Object.entries(sectionData).map(([key, value]) => {
