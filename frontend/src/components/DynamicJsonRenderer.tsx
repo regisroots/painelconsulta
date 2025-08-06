@@ -29,6 +29,17 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
     if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
       return new Date(value).toLocaleString('pt-BR');
     }
+    if (typeof value === 'object' && value !== null) {
+      if (Array.isArray(value)) {
+        return `${value.length} item(s)`;
+      } else {
+        const entries = Object.entries(value);
+        if (entries.length === 0) return '-';
+        return entries
+          .map(([k, v]) => `${formatFieldName(k)}: ${v === null || v === undefined ? '-' : String(v)}`)
+          .join(', ');
+      }
+    }
     return String(value);
   };
 
