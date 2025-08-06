@@ -25,19 +25,36 @@ export default function DynamicJsonRenderer({ data, className }: DynamicJsonRend
 
   const formatValue = (value: any): string => {
     if (value === null || value === undefined) return '-';
+    if (typeof value === 'number') return value.toLocaleString('pt-BR');
     if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
     if (typeof value === 'string' && value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
       return new Date(value).toLocaleString('pt-BR');
     }
     if (typeof value === 'object' && value !== null) {
       if (Array.isArray(value)) {
+        if (value.length === 0) return '-';
+        if (value.length === 1 && typeof value[0] === 'object') {
+          const obj = value[0];
+          const entries = Object.entries(obj);
+          if (entries.length === 0) return '-';
+          return entries
+            .map(([k, v]) => `${formatFieldName(k)}: ${formatValue(v)}`)
+            .join(' • ');
+        }
         return `${value.length} item(s)`;
       } else {
         const entries = Object.entries(value);
         if (entries.length === 0) return '-';
-        return entries
-          .map(([k, v]) => `${formatFieldName(k)}: ${v === null || v === undefined ? '-' : String(v)}`)
-          .join(' • ');
+        
+        const formattedEntries = entries
+          .map(([k, v]) => {
+            const formattedKey = formatFieldName(k);
+            const formattedValue = formatValue(v);
+            return `${formattedKey}: ${formattedValue}`;
+          })
+          .filter(entry => !entry.endsWith(': -')); // Remove empty entries
+        
+        return formattedEntries.length > 0 ? formattedEntries.join(' • ') : '-';
       }
     }
     return String(value);
