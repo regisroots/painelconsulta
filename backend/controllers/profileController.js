@@ -1,3 +1,4 @@
+const bcrypt = require('bcryptjs');
 const { User } = require('../models');
 const { logAdminAction, logRevendedorAction } = require('../services/logService');
 
@@ -73,7 +74,41 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    const { senhaAtual, novaSenha } = req.body;
+
+    if (!senhaAtual || !novaSenha) {
+      return res.status(400).json({ error: 'Senha atual e nova senha são obrigatórias' });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const senhaValida = await bcrypt.compare(senhaAtual, user.senha_hash);
+    if (!senhaValida) {
+      return res.status(400).json({ error: 'Senha atual incorreta' });
+    }
+
+    const novaSenhaHash = await bcrypt.hash(novaSenha, 10);
+    user.senha_hash = novaSenhaHash;
+    await user.save();
+
+    const logFunction = user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
+    await logFunction(user.id, 'Senha alterada', {});
+
+    res.json({ message: 'Senha alterada com sucesso' });
+
+  } catch (error) {
+    console.error('Erro ao alterar senha:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
+  changePassword,
 };

@@ -29,7 +29,15 @@ const login = async (req, res) => {
     }
 
     if (user.data_expiracao && new Date() > user.data_expiracao) {
-      return res.status(401).json({ error: 'Conta expirada' });
+      const revendedor = await User.findByPk(user.revendedor_id, {
+        attributes: ['id', 'nome', 'email', 'whatsapp_contato', 'telegram_contato']
+      });
+      
+      return res.status(401).json({ 
+        error: 'Conta expirada',
+        expired: true,
+        revendedor: revendedor || null
+      });
     }
 
     const senhaValida = await bcrypt.compare(senha, user.senha_hash);

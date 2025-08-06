@@ -87,6 +87,9 @@ export const profileAPI = {
   
   updateProfile: (profileData: { nome?: string; email?: string; whatsapp_contato?: string; telegram_contato?: string }) =>
     api.put('/profile', profileData).then(res => res.data),
+  
+  changePassword: (senhaAtual: string, novaSenha: string) =>
+    api.post('/profile/change-password', { senhaAtual, novaSenha }).then(res => res.data),
 };
 
 export const uploadAPI = {

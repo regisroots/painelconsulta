@@ -111,6 +111,8 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                   onClick={() => {
                     if (item.href.startsWith('/')) {
                       window.location.href = item.href;
+                    } else if (item.href === '#historico') {
+                      window.location.href = '/historico';
                     }
                   }}
                 >
@@ -181,10 +183,32 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
               <div className="text-sm font-medium text-gray-900">
                 Bem-vindo, {user.nome}
               </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                onClick={() => window.location.href = '/profile'}
+              >
+                <UserIcon className="h-3 w-3 mr-1" />
+                Perfil
+              </Button>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-green-600 font-medium">Online</span>
+            <div className="flex items-center space-x-3">
+              {(user.tipo === 'admin' || user.tipo === 'revendedor') && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white shadow-md flex items-center"
+                  onClick={() => window.location.href = '/admin/dashboard'}
+                >
+                  <Settings className="h-3 w-3 mr-1" />
+                  <span>Admin</span>
+                </Button>
+              )}
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs text-green-600 font-medium">Online</span>
+              </div>
             </div>
           </div>
         </header>
