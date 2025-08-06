@@ -190,7 +190,7 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
         </header>
 
         {/* Page content */}
-        <main className="p-6">
+        <main className="p-4 pt-2">
           {children}
         </main>
       </div>
