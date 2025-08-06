@@ -60,6 +60,7 @@ const createUser = async (req, res) => {
       dias_ativos,
       data_expiracao,
       creditos,
+      revendedor_id: req.user.tipo === 'revendedor' ? req.user.id : null,
     });
 
     const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;

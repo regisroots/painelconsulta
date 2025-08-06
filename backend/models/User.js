@@ -66,6 +66,22 @@ module.exports = (sequelize) => {
       allowNull: false,
       defaultValue: {},
     },
+    revendedor_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+    },
+    whatsapp_contato: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    telegram_contato: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   }, {
     tableName: 'users',
     timestamps: true,

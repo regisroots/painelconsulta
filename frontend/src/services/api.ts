@@ -81,6 +81,14 @@ export const logAPI = {
     api.get('/logs').then(res => res.data),
 };
 
+export const profileAPI = {
+  getProfile: (): Promise<{ user: User }> =>
+    api.get('/profile').then(res => res.data),
+  
+  updateProfile: (profileData: { nome?: string; email?: string; whatsapp_contato?: string; telegram_contato?: string }) =>
+    api.put('/profile', profileData).then(res => res.data),
+};
+
 export const uploadAPI = {
   uploadModuleImage: (file: File) => {
     const formData = new FormData();
