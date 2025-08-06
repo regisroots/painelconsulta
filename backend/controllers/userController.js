@@ -696,6 +696,42 @@ const unbanUser = async (req, res) => {
   }
 };
 
+const setUserModuleLimit = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { modulo_id, limite } = req.body;
+    
+    if (req.user.tipo !== 'admin') {
+      return res.status(403).json({ error: 'Acesso negado' });
+    }
+
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const novosModulos = { ...user.modulos };
+    if (!novosModulos[modulo_id]) {
+      novosModulos[modulo_id] = { limite: 0, usado: 0 };
+    }
+    novosModulos[modulo_id].limite = limite;
+    user.modulos = novosModulos;
+
+    await user.save();
+    
+    await logAdminAction(req.user.id, 'Limite de módulo alterado', { 
+      usuario_id: id,
+      modulo_id,
+      limite 
+    });
+
+    res.json({ message: 'Limite de módulo atualizado com sucesso', user });
+  } catch (error) {
+    console.error('Erro ao definir limite de módulo:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+};
+
 module.exports = {
   getUsers,
   createUser,
@@ -711,4 +747,5 @@ module.exports = {
   login,
   register,
   getUserMetrics,
+  setUserModuleLimit
 };

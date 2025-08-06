@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireRole } = require('../middlewares/auth');
-const { getUsers, createUser, updateUser, banUser, unbanUser, addCredits, removeCredits, addDays, removeDays, addHours, changeUserRole, login, register, getUserMetrics } = require('../controllers/userController');
+const { getUsers, createUser, updateUser, banUser, unbanUser, addCredits, removeCredits, addDays, removeDays, addHours, changeUserRole, setUserModuleLimit, login, register, getUserMetrics } = require('../controllers/userController');
 
 router.post('/login', login);
 
@@ -24,5 +24,6 @@ router.post('/:id/days/add', requireRole(['admin', 'revendedor']), addDays);
 router.post('/:id/days/remove', requireRole(['admin', 'revendedor']), removeDays);
 router.post('/:id/hours/add', requireRole(['admin', 'revendedor']), addHours);
 router.put('/:id/role', requireRole(['admin']), changeUserRole);
+router.post('/:id/module-limit', requireRole(['admin']), setUserModuleLimit);
 
 module.exports = router;

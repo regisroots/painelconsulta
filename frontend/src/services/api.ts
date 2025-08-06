@@ -74,6 +74,9 @@ export const userAPI = {
   
   changeUserRole: (id: number, tipo: string) =>
     api.put(`/users/${id}/role`, { tipo }).then(res => res.data),
+  
+  setModuleLimit: (id: number, modulo_id: number, limite: number) =>
+    api.post(`/users/${id}/module-limit`, { modulo_id, limite }).then(res => res.data),
 };
 
 export const moduloAPI = {
