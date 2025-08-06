@@ -12,6 +12,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModulo, setSelectedModulo] = useState<Modulo | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filteredModulos, setFilteredModulos] = useState<Modulo[]>([]);
 
   useEffect(() => {
     loadModulos();
@@ -21,7 +23,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     try {
       const data = await moduloAPI.getAtivos();
       const modulosArray = Array.isArray(data) ? data : (data as any).modulos || [];
-      setModulos(modulosArray.filter((m: any) => m.ativo && !m.manutencao));
+      setModulos(modulosArray.filter((m: any) => m.ativo));
     } catch (error) {
       console.error('Erro ao carregar módulos:', error);
     } finally {
@@ -32,6 +34,18 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const diasRestantes = user.data_expiracao 
     ? Math.ceil((new Date(user.data_expiracao).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : null;
+
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setFilteredModulos(modulos);
+    } else {
+      const filtered = modulos.filter(modulo => 
+        modulo.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        modulo.descricao.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredModulos(filtered);
+    }
+  }, [modulos, searchTerm]);
 
   if (selectedModulo) {
     return (
@@ -246,6 +260,41 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
           
         </div>
 
+        {/* Search Bar */}
+        <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-xl border border-white/30 p-8 mb-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Pesquisar Módulos
+              </h3>
+              <p className="text-gray-600">
+                Digite o nome ou palavra-chave para encontrar o módulo desejado
+              </p>
+            </div>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Ex: CPF, CNPJ, Serasa..."
+                className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-all"
+              />
+            </div>
+            {searchTerm && (
+              <div className="mt-4 text-center">
+                <span className="text-sm text-gray-600">
+                  {filteredModulos.length} módulo{filteredModulos.length !== 1 ? 's' : ''} encontrado{filteredModulos.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Enhanced Services Section */}
         <div className="bg-white/80 backdrop-blur-md rounded-3xl shadow-2xl border border-white/30 p-10">
           <div className="text-center mb-10">
@@ -259,7 +308,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               <div className="flex items-center space-x-2 bg-green-50 px-4 py-2 rounded-full border border-green-200">
                 <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-semibold text-green-700">
-                  {modulos.length} serviços disponíveis
+                  {filteredModulos.length} serviços {searchTerm ? 'encontrados' : 'disponíveis'}
                 </span>
               </div>
               <div className="flex items-center space-x-2 bg-blue-50 px-4 py-2 rounded-full border border-blue-200">
@@ -279,39 +328,52 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
               <p className="mt-6 text-gray-600 text-lg">Carregando serviços...</p>
             </div>
-          ) : modulos.length === 0 ? (
+          ) : filteredModulos.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-32 h-32 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
                 <svg className="h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={searchTerm ? "M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" : "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"} />
                 </svg>
               </div>
               <h4 className="text-2xl font-semibold text-gray-900 mb-3">
-                Nenhum serviço disponível
+                {searchTerm ? 'Nenhum módulo encontrado' : 'Nenhum serviço disponível'}
               </h4>
               <p className="text-gray-600 text-lg">
-                Os serviços de consulta aparecerão aqui quando estiverem ativos.
+                {searchTerm 
+                  ? `Não encontramos módulos que correspondam a "${searchTerm}". Tente uma palavra-chave diferente.`
+                  : 'Os serviços de consulta aparecerão aqui quando estiverem ativos.'
+                }
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {modulos.map((modulo) => (
+              {filteredModulos.map((modulo) => (
                 <div
                   key={modulo.id}
-                  onClick={() => setSelectedModulo(modulo)}
-                  className="group relative bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-white/40 p-8 hover:shadow-2xl hover:scale-105 transition-all duration-500 cursor-pointer overflow-hidden"
+                  onClick={() => !modulo.manutencao && setSelectedModulo(modulo)}
+                  className={`group relative bg-white/90 backdrop-blur-md rounded-3xl shadow-xl border border-white/40 p-8 hover:shadow-2xl hover:scale-105 transition-all duration-500 overflow-hidden ${
+                    modulo.manutencao 
+                      ? 'cursor-not-allowed opacity-75' 
+                      : 'cursor-pointer'
+                  }`}
                 >
                   {/* Enhanced Background Gradient */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-50/70 via-indigo-50/70 to-purple-50/70 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                  <div className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-500 ${
+                    modulo.manutencao
+                      ? 'from-orange-50/70 via-yellow-50/70 to-orange-50/70 opacity-100'
+                      : 'from-blue-50/70 via-indigo-50/70 to-purple-50/70 opacity-0 group-hover:opacity-100'
+                  }`}></div>
                   
                   {/* Enhanced Status Badge */}
                   <div className="absolute top-6 right-6 z-10">
                     <span className={`px-4 py-2 rounded-full text-xs font-bold shadow-xl backdrop-blur-sm ${
-                      modulo.ativo && !modulo.manutencao
-                        ? 'bg-green-500/90 text-white border border-green-400'
-                        : 'bg-red-500/90 text-white border border-red-400'
+                      modulo.manutencao
+                        ? 'bg-orange-500/90 text-white border border-orange-400'
+                        : modulo.ativo 
+                          ? 'bg-green-500/90 text-white border border-green-400'
+                          : 'bg-red-500/90 text-white border border-red-400'
                     }`}>
-                      {modulo.ativo && !modulo.manutencao ? 'ONLINE' : 'OFFLINE'}
+                      {modulo.manutencao ? 'MANUTENÇÃO' : (modulo.ativo ? 'ONLINE' : 'OFFLINE')}
                     </span>
                   </div>
 
