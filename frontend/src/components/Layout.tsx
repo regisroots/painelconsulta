@@ -26,10 +26,10 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   const userMenuItems = [
-    { icon: Home, label: 'Dashboard', href: '#dashboard' },
+    { icon: Home, label: 'Dashboard', href: '/' },
     { icon: Search, label: 'Consultas', href: '#consultas' },
     { icon: History, label: 'Histórico', href: '#historico' },
-    { icon: UserIcon, label: 'Perfil', href: '#perfil' },
+    { icon: UserIcon, label: 'Perfil', href: '/profile' },
   ];
 
   const adminMenuItems = [
@@ -113,6 +113,11 @@ export default function Layout({ user, children, onLogout }: LayoutProps) {
                   key={item.label}
                   variant="ghost"
                   className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                  onClick={() => {
+                    if (item.href.startsWith('/')) {
+                      window.location.href = item.href;
+                    }
+                  }}
                 >
                   <item.icon className="mr-3 h-4 w-4" />
                   {item.label}

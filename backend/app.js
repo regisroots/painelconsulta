@@ -17,6 +17,8 @@ console.log('Loading consulta routes...');
 const consultaRoutes = require('./routes/consultas');
 console.log('Loading log routes...');
 const logRoutes = require('./routes/logs');
+console.log('Loading profile routes...');
+const profileRoutes = require('./routes/profile');
 console.log('Loading upload routes...');
 const uploadRoutes = require('./routes/upload');
 
@@ -73,6 +75,10 @@ console.log('Consulta routes registered successfully');
 console.log('Registering log routes...');
 app.use('/api/logs', logRoutes);
 console.log('Log routes registered successfully');
+
+console.log('Registering profile routes...');
+app.use('/api/profile', profileRoutes);
+console.log('Profile routes registered successfully');
 
 console.log('Registering upload routes...');
 app.use('/api/upload', uploadRoutes);

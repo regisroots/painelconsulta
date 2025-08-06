@@ -36,6 +36,9 @@ Consulta.belongsTo(Modulo, { foreignKey: 'modulo_id' });
 User.hasMany(Log, { foreignKey: 'usuario_id' });
 Log.belongsTo(User, { foreignKey: 'usuario_id' });
 
+User.hasMany(User, { as: 'usuarios', foreignKey: 'revendedor_id' });
+User.belongsTo(User, { as: 'revendedor', foreignKey: 'revendedor_id' });
+
 const db = {
   sequelize,
   Sequelize,

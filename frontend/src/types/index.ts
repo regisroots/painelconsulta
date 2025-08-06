@@ -9,6 +9,10 @@ export interface User {
   ativo: boolean;
   banido: boolean;
   motivo_banimento?: string;
+  revendedor_id?: number;
+  whatsapp_contato?: string;
+  telegram_contato?: string;
+  revendedor?: User;
 }
 
 export interface Modulo {

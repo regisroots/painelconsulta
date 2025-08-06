@@ -4,6 +4,7 @@ import Login from './components/Login'
 import Dashboard from './components/Dashboard'
 import AdminDashboard from './components/admin/AdminDashboard'
 import AdminModules from './components/admin/AdminModules'
+import Profile from './components/Profile'
 import { User } from './types'
 
 function App() {
@@ -57,6 +58,16 @@ function App() {
           element={
             user ? (
               <Dashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          } 
+        />
+        <Route 
+          path="/profile" 
+          element={
+            user ? (
+              <Profile user={user} onUserUpdate={setUser} />
             ) : (
               <Navigate to="/login" replace />
             )
