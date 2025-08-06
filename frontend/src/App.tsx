@@ -60,7 +60,7 @@ function App() {
           path="/" 
           element={
             user ? (
-              <Dashboard user={user} onLogout={handleLogout} onUserUpdate={setUser} />
+              <Dashboard user={user} onLogout={handleLogout} />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -80,7 +80,7 @@ function App() {
           path="/historico" 
           element={
             user ? (
-              <ConsultationHistory user={user} onBack={() => window.location.href = '/'} />
+              <ConsultationHistory onBack={() => window.location.href = '/'} />
             ) : (
               <Navigate to="/login" replace />
             )

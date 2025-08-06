@@ -4,7 +4,7 @@ import { Consulta } from '../types';
 import { ArrowLeft, Calendar, CheckCircle, XCircle, Search } from 'lucide-react';
 
 interface ConsultationHistoryProps {
-  onBack?: () => void;
+  onBack: () => void;
 }
 
 export default function ConsultationHistory({ onBack }: ConsultationHistoryProps) {
@@ -19,7 +19,7 @@ export default function ConsultationHistory({ onBack }: ConsultationHistoryProps
     try {
       setLoading(true);
       const response = await consultaAPI.getConsultas();
-      setConsultas(Array.isArray(response) ? response : (response as any).consultas || []);
+      setConsultas(Array.isArray(response) ? response : []);
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
     } finally {
@@ -56,7 +56,7 @@ export default function ConsultationHistory({ onBack }: ConsultationHistoryProps
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <button
-            onClick={() => onBack ? onBack() : window.location.href = '/'}
+            onClick={onBack}
             className="flex items-center space-x-2 text-blue-600 hover:text-blue-700 transition-colors mb-4"
           >
             <ArrowLeft className="w-5 h-5" />

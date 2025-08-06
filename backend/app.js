@@ -62,7 +62,6 @@ console.log('Auth routes registered successfully');
 
 console.log('Registering user routes...');
 app.use('/api/users', userRoutes);
-app.use('/api/users', require('./routes/userPlan'));
 console.log('User routes registered successfully');
 
 console.log('Registering modulo routes...');
