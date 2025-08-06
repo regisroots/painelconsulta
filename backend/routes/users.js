@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authenticateToken, requireRole } = require('../middlewares/auth');
-const { getUsers, createUser, updateUser, banUser, login, register } = require('../controllers/userController');
+const { getUsers, createUser, updateUser, banUser, login, register, getUserMetrics } = require('../controllers/userController');
 
 router.post('/login', login);
 
@@ -9,6 +9,7 @@ router.post('/register', register);
 
 router.use(authenticateToken);
 
+router.get('/metrics', requireRole(['admin', 'revendedor']), getUserMetrics);
 router.get('/', requireRole(['admin', 'revendedor']), getUsers);
 
 router.post('/', requireRole(['admin', 'revendedor']), createUser);

@@ -48,6 +48,9 @@ export const userAPI = {
   updateUser: (id: number, userData: any) =>
     api.put(`/users/${id}`, userData).then(res => res.data),
   
+  getUserMetrics: (params?: { startDate?: string; endDate?: string; revendedorId?: number }) =>
+    api.get('/users/metrics', { params }).then(res => res.data),
+  
   banUser: (id: number, motivo: string) =>
     api.post(`/users/${id}/ban`, { motivo }).then(res => res.data),
 };

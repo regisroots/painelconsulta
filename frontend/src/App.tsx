@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import AdminDashboard from './components/admin/AdminDashboard'
 import AdminModules from './components/admin/AdminModules'
 import AdminUsers from './components/admin/AdminUsers'
+import AdminMetrics from './components/admin/AdminMetrics'
 import Profile from './components/Profile'
 import { User } from './types'
 
@@ -82,6 +83,7 @@ function App() {
                 <Route path="dashboard" element={<AdminDashboard user={user} onLogout={handleLogout} />} />
                 <Route path="modulos" element={<AdminModules user={user} onLogout={handleLogout} />} />
                 <Route path="usuarios" element={<AdminUsers user={user} onLogout={handleLogout} />} />
+                <Route path="metricas" element={<AdminMetrics user={user} onLogout={handleLogout} />} />
                 <Route path="" element={<Navigate to="dashboard" replace />} />
               </Routes>
             ) : (
