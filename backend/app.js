@@ -301,6 +301,7 @@ const createInitialData = async () => {
           api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cep&Info={cep}',
           tipo_limite: 'quantidade',
           preco_por_consulta: 0.50,
+          limite_padrao_quantidade: 1500,
           campos_entrada: [
             { nome: 'cep', tipo: 'string', obrigatorio: true, mascara: '00000-000' }
           ],
@@ -330,10 +331,45 @@ const createInitialData = async () => {
         },
       ]);
       console.log('✅ Módulos de exemplo criados.');
+      
+      await fixCEPQuantityLimits();
     }
 
   } catch (error) {
     console.error('❌ Erro ao criar dados iniciais:', error);
+  }
+};
+
+const fixCEPQuantityLimits = async () => {
+  try {
+    const cepModule = await db.Modulo.findOne({ where: { nome: 'Consulta CEP' } });
+    if (!cepModule) {
+      console.log('⚠️ Módulo CEP não encontrado');
+      return;
+    }
+
+    const users = await db.User.findAll();
+    let updatedUsers = 0;
+
+    for (const user of users) {
+      const userModulos = user.modulos || {};
+      
+      if (!userModulos[cepModule.id] || userModulos[cepModule.id].limite === 0) {
+        userModulos[cepModule.id] = { 
+          limite: cepModule.limite_padrao_quantidade || 1500, 
+          usado: userModulos[cepModule.id]?.usado || 0 
+        };
+        user.modulos = userModulos;
+        await user.save();
+        updatedUsers++;
+      }
+    }
+
+    if (updatedUsers > 0) {
+      console.log(`✅ Limites de CEP atualizados para ${updatedUsers} usuários`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao corrigir limites de CEP:', error);
   }
 };
 
