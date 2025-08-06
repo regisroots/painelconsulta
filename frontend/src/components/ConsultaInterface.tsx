@@ -23,7 +23,7 @@ export default function ConsultaInterface({ modulo, onBack }: ConsultaInterfaceP
     
     try {
       const response = await consultaAPI.realizarConsulta(modulo.id, inputData);
-      setResultado(response.data);
+      setResultado(response.retorno);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Erro ao realizar consulta');
     } finally {

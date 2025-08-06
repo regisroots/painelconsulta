@@ -7,7 +7,6 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
 
   try {
     const user = await User.findByPk(usuario_id, {
-      lock: transaction.LOCK.UPDATE,
       transaction,
     });
 
@@ -41,9 +40,21 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
         apiUrl = apiUrl.replace(`{${key}}`, encodeURIComponent(input[key]));
       });
 
-      const response = await axios.get(apiUrl, {
-        timeout: (modulo.timeout_segundos || 30) * 1000,
-      });
+      console.log('Fazendo requisição para:', apiUrl);
+
+      let response;
+      
+      if (apiUrl.includes('localhost:3000/api/local-test/')) {
+        console.log('Detectada API local, fazendo chamada direta');
+        
+        response = await axios.get(apiUrl, {
+          timeout: (modulo.timeout_segundos || 30) * 1000,
+        });
+      } else {
+        response = await axios.get(apiUrl, {
+          timeout: (modulo.timeout_segundos || 30) * 1000,
+        });
+      }
 
       const filteredData = { ...response.data };
       delete filteredData.success;
@@ -79,13 +90,15 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
       status,
     }, { transaction });
 
+    console.log('=== FAZENDO COMMIT DA TRANSACAO ===');
+    await transaction.commit();
+    console.log('=== TRANSACAO COMMITADA COM SUCESSO ===');
+
     await logConsulta(usuario_id, `Consulta ${modulo.nome}`, {
       modulo_id,
       input,
       status,
     });
-
-    await transaction.commit();
 
     return {
       consulta,

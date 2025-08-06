@@ -135,6 +135,56 @@ app.get('/api/test/cpf/:cpf', async (req, res) => {
   }
 });
 
+app.get('/api/local-test/cpf/:cpf', (req, res) => {
+  const { cpf } = req.params;
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      cpf: cpf,
+      dados_pessoais: {
+        nome: "JOÃO DA SILVA SANTOS",
+        data_nascimento: "15/03/1985",
+        situacao_cpf: "REGULAR",
+        data_inscricao: "10/05/2003"
+      },
+      endereco: {
+        logradouro: "RUA DAS FLORES, 123",
+        bairro: "CENTRO",
+        cidade: "SÃO PAULO",
+        uf: "SP",
+        cep: "01234-567"
+      },
+      receita_federal: {
+        situacao: "ATIVA",
+        ultima_consulta: "2025-08-06",
+        comprovante_situacao: "REGULAR"
+      },
+      vinculos: {
+        empresas: [
+          {
+            cnpj: "12.345.678/0001-90",
+            razao_social: "EMPRESA EXEMPLO LTDA",
+            situacao: "ATIVA",
+            data_inicio: "01/01/2020"
+          }
+        ],
+        total_vinculos: 1
+      },
+      score: {
+        pontuacao: 750,
+        classificacao: "BOM",
+        ultima_atualizacao: "2025-08-06"
+      },
+      consulta_info: {
+        timestamp: new Date().toISOString(),
+        fonte: "API_LOCAL_TEST",
+        versao: "1.0"
+      }
+    });
+  }, 1000);
+});
+
 app.use((err, req, res, next) => {
   console.error('Erro:', err);
   
@@ -207,6 +257,18 @@ const createInitialData = async () => {
     
     if (modulosCount === 0) {
       await db.Modulo.bulkCreate([
+        {
+          nome: 'CPF Local Test',
+          descricao: 'Módulo de teste local para consulta CPF',
+          api_url: 'http://localhost:3000/api/local-test/cpf/{cpf}',
+          tipo_limite: 'creditos',
+          preco_por_consulta: 1.00,
+          campos_entrada: [
+            { nome: 'cpf', tipo: 'string', obrigatorio: true, mascara: '000.000.000-00' }
+          ],
+          ativo: true,
+          timeout_segundos: 30,
+        },
         {
           nome: 'Consulta CPF',
           descricao: 'Consulta dados por CPF',

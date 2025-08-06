@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthResponse, Consulta, Log } from '../types';
+import { AuthResponse, Consulta, Log, User } from '../types';
 
 const API_BASE_URL = 'http://localhost:3000/api';
 
