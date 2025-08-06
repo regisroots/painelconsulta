@@ -16,6 +16,8 @@ router.get('/', getConsultas);
 
 router.get('/admin/all', requireRole(['admin', 'revendedor']), getAllConsultas);
 
+router.get('/meu-historico', getConsultas);
+
 router.get('/:id', getConsultaById);
 
 module.exports = router;
