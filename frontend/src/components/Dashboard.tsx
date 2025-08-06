@@ -6,9 +6,10 @@ import ConsultaInterface from './ConsultaInterface';
 interface DashboardProps {
   user: User;
   onLogout: () => void;
+  onUserUpdate?: (updatedUser: User) => void;
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardProps) {
   const [modulos, setModulos] = useState<Modulo[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedModulo, setSelectedModulo] = useState<Modulo | null>(null);
@@ -37,7 +38,18 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     return (
       <ConsultaInterface 
         modulo={selectedModulo} 
-        onBack={() => setSelectedModulo(null)} 
+        onBack={() => {
+          setSelectedModulo(null);
+          if (onUserUpdate) {
+            import('../services/api').then(({ profileAPI }) => {
+              profileAPI.getProfile().then((response: any) => {
+                if (onUserUpdate) {
+                  onUserUpdate(response.user || response);
+                }
+              }).catch(console.error);
+            });
+          }
+        }} 
       />
     );
   }

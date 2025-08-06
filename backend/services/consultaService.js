@@ -64,8 +64,13 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
       retorno_resumido = filteredData;
       status = 'sucesso';
 
-      if (modulo.tipo_limite === 'creditos') {
-        user.creditos -= 1;
+      if (modulo.tipo_limite === 'creditos' && modulo.preco_por_consulta > 0) {
+        const creditosAnteriores = user.creditos;
+        if (user.creditos < modulo.preco_por_consulta) {
+          throw new Error('Créditos insuficientes');
+        }
+        user.creditos -= modulo.preco_por_consulta;
+        console.log(`Créditos deduzidos: ${modulo.preco_por_consulta}. Créditos anteriores: ${creditosAnteriores}, Créditos restantes: ${user.creditos}`);
       }
 
       const novosModulos = { ...user.modulos };
