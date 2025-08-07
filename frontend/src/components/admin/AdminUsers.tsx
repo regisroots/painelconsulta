@@ -554,7 +554,7 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                             </button>
                           )}
                           
-                          {user.tipo === 'admin' && (
+                          {user.tipo === 'admin' && userData.id !== user.id && (
                             <button
                               onClick={() => openModal('delete', userData.id, userData.nome)}
                               className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
