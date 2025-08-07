@@ -22,7 +22,12 @@ const getModulosAtivos = async (req, res) => {
       order: [['nome', 'ASC']],
     });
 
-    res.json({ modulos });
+    const modulosSafe = modulos.map(modulo => {
+      const { api_url, ...safeData } = modulo.toJSON();
+      return safeData;
+    });
+
+    res.json({ modulos: modulosSafe });
 
   } catch (error) {
     console.error('Erro ao buscar módulos ativos:', error);
