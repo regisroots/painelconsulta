@@ -406,13 +406,35 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
                     {modulo.tipo_limite === 'quantidade' && (
                       <div className="mb-2">
                         {(() => {
-                          const moduloConfig = currentUser.modulos?.[modulo.id] || { limite: 0, usado: 0 };
-                          const remaining = Math.max(0, moduloConfig.limite - moduloConfig.usado);
+                          const moduloFromState = modulos.find(m => m.id === modulo.id);
+                          const defaultLimit = moduloFromState?.limite_padrao_quantidade || 1000;
+                          const moduloConfig = user.modulos?.[modulo.id];
+                          
+                          console.log('=== DASHBOARD DEBUG ===');
+                          console.log('Modulo ID:', modulo.id);
+                          console.log('Modulo nome:', modulo.nome);
+                          console.log('moduloFromState:', moduloFromState);
+                          console.log('defaultLimit:', defaultLimit);
+                          console.log('moduloConfig:', moduloConfig);
+                          console.log('user.modulos:', user.modulos);
+                          console.log('=== FIM DEBUG ===');
+                          
+                          if (!moduloConfig) {
+                            return (
+                              <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200 shadow-lg">
+                                <span className="text-xs font-bold text-gray-700">
+                                  0/{defaultLimit}
+                                </span>
+                              </div>
+                            );
+                          }
+                          
+                          const limite = moduloConfig.limite || defaultLimit;
                           
                           return (
                             <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full border border-gray-200 shadow-lg">
                               <span className="text-xs font-bold text-gray-700">
-                                {remaining}/{moduloConfig.limite}
+                                {moduloConfig.usado || 0}/{limite}
                               </span>
                             </div>
                           );

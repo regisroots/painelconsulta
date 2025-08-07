@@ -18,16 +18,56 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
       throw new Error('Módulo não encontrado ou inativo');
     }
 
-    const moduloConfig = user.modulos[modulo_id] || { limite: 0, usado: 0 };
-    
     if (modulo.tipo_limite === 'creditos') {
       if (user.creditos <= 0) {
         throw new Error('Créditos insuficientes');
       }
     } else if (modulo.tipo_limite === 'quantidade') {
+      console.log('=== VALIDACAO MODULO QUANTIDADE ===');
+      console.log('Modulo limite_padrao_quantidade:', modulo.limite_padrao_quantidade);
+      
+      let novosModulos = { ...user.modulos };
+      
+      if (!novosModulos[modulo_id]) {
+        console.log('Modulo nao encontrado nos modulos do usuario, criando entrada com limite padrao');
+        novosModulos[modulo_id] = { 
+          limite: modulo.limite_padrao_quantidade || 1000, 
+          usado: 0, 
+          usos: []
+        };
+      }
+      
+      const agora = new Date();
+      const moduloConfig = novosModulos[modulo_id];
+      
+      if (!moduloConfig.limite || moduloConfig.limite === 0 || moduloConfig.limite !== modulo.limite_padrao_quantidade) {
+        console.log('Atualizando limite do modulo para:', modulo.limite_padrao_quantidade);
+        moduloConfig.limite = modulo.limite_padrao_quantidade || 1000;
+      }
+      
+      if (!moduloConfig.usos) {
+        moduloConfig.usos = [];
+      }
+      
+      const usos24hAtras = moduloConfig.usos.filter(uso => {
+        const usoDate = new Date(uso);
+        const diff = agora - usoDate;
+        return diff < 24 * 60 * 60 * 1000;
+      });
+      
+      moduloConfig.usos = usos24hAtras;
+      moduloConfig.usado = usos24hAtras.length;
+      
+      console.log('Usado atual:', moduloConfig.usado);
+      console.log('Limite atual:', moduloConfig.limite);
+      
       if (moduloConfig.usado >= moduloConfig.limite) {
         throw new Error('Limite de consultas excedido para este módulo');
       }
+      
+      user.modulos = novosModulos;
+      await user.save({ transaction });
+      console.log('=== FIM VALIDACAO MODULO QUANTIDADE ===');
     }
 
     let retorno_resumido = null;
@@ -77,20 +117,48 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
         console.log('Creditos depois:', user.creditos);
       } else if (modulo.tipo_limite === 'quantidade') {
         console.log('=== PROCESSANDO MODULO TIPO QUANTIDADE ===');
+        console.log('Modulo limite_padrao_quantidade:', modulo.limite_padrao_quantidade);
+        
         const novosModulos = { ...user.modulos };
+        const agora = new Date();
+        
         if (!novosModulos[modulo_id]) {
-          console.log('Modulo nao encontrado nos modulos do usuario, criando entrada');
-          novosModulos[modulo_id] = { limite: 0, usado: 0 };
+          console.log('Modulo nao encontrado nos modulos do usuario, criando entrada com limite padrao');
+          novosModulos[modulo_id] = { 
+            limite: modulo.limite_padrao_quantidade || 1000, 
+            usado: 0, 
+            usos: []
+          };
         }
         
-        console.log('Usado ANTES:', novosModulos[modulo_id].usado);
-        novosModulos[modulo_id].usado += 1;
+        if (!novosModulos[modulo_id].limite || novosModulos[modulo_id].limite === 0 || novosModulos[modulo_id].limite !== modulo.limite_padrao_quantidade) {
+          console.log('Atualizando limite do modulo para:', modulo.limite_padrao_quantidade);
+          novosModulos[modulo_id].limite = modulo.limite_padrao_quantidade || 1000;
+        }
+        
+        if (!novosModulos[modulo_id].usos) {
+          novosModulos[modulo_id].usos = [];
+        }
+        
+        novosModulos[modulo_id].usos.push(agora.toISOString());
+        
+        const usos24hAtras = novosModulos[modulo_id].usos.filter(uso => {
+          const usoDate = new Date(uso);
+          const diff = agora - usoDate;
+          return diff < 24 * 60 * 60 * 1000;
+        });
+        
+        novosModulos[modulo_id].usos = usos24hAtras;
+        novosModulos[modulo_id].usado = usos24hAtras.length;
+        
+        console.log('Usado ANTES:', novosModulos[modulo_id].usado - 1);
         console.log('Usado DEPOIS:', novosModulos[modulo_id].usado);
+        console.log('Limite:', novosModulos[modulo_id].limite);
         
         user.modulos = novosModulos;
         console.log('Modulos do usuario DEPOIS:', JSON.stringify(user.modulos, null, 2));
         console.log('=== FIM PROCESSAMENTO MODULO QUANTIDADE ===');
-      } else {
+      }else {
         console.log('TIPO DE LIMITE NAO RECONHECIDO:', modulo.tipo_limite);
       }
 

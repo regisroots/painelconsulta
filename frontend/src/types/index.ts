@@ -5,7 +5,7 @@ export interface User {
   tipo: 'admin' | 'revendedor' | 'usuario';
   creditos: number;
   data_expiracao: string | null;
-  modulos: Record<string, { limite: number; usado: number }>;
+  modulos: Record<string, { limite: number; usado: number; usos?: string[]; ultimo_reset?: string }>;
   ativo: boolean;
   banido: boolean;
   motivo_banimento?: string;
@@ -27,6 +27,7 @@ export interface Modulo {
   manutencao: boolean;
   imagem_url?: string;
   timeout_segundos?: number;
+  limite_padrao_quantidade?: number;
 }
 
 export interface CampoEntrada {
