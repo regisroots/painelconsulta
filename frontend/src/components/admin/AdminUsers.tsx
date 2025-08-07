@@ -13,9 +13,9 @@ import {
   Calendar,
   CreditCard,
   Shield,
-  Clock,
   Minus,
-  UserCog
+  UserCog,
+  Trash2
 } from 'lucide-react';
 
 interface AdminUsersProps {
@@ -49,7 +49,7 @@ interface CreateUserForm {
 
 interface ModalState {
   show: boolean;
-  type: 'credits' | 'days' | 'hours' | 'role' | 'ban' | null;
+  type: 'credits' | 'days' | 'role' | 'ban' | 'delete' | null;
   userId: number | null;
   userName: string;
   action: 'add' | 'remove' | 'change' | null;
@@ -168,47 +168,53 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
   };
 
   const handleModalSubmit = async () => {
-    if (!modal.userId || !inputValue) return;
+    if (!modal.userId) return;
 
     try {
-      const amount = parseInt(inputValue);
-      if (isNaN(amount) || amount <= 0) {
-        alert('Por favor, insira um valor válido');
-        return;
-      }
+      if (modal.type === 'delete') {
+        if (!confirm(`Tem certeza que deseja deletar o usuário ${modal.userName}? Esta ação não pode ser desfeita.`)) {
+          return;
+        }
+        await userAPI.deleteUser(modal.userId);
+      } else {
+        if (!inputValue) return;
+        
+        const amount = parseInt(inputValue);
+        if (isNaN(amount) || amount <= 0) {
+          alert('Por favor, insira um valor válido');
+          return;
+        }
 
-      switch (modal.type) {
-        case 'credits':
-          if (modal.action === 'add') {
-            await userAPI.addCredits(modal.userId, amount);
-          } else {
-            await userAPI.removeCredits(modal.userId, amount);
-          }
-          break;
-        case 'days':
-          if (modal.action === 'add') {
-            await userAPI.addDays(modal.userId, amount);
-          } else {
-            await userAPI.removeDays(modal.userId, amount);
-          }
-          break;
-        case 'hours':
-          await userAPI.addHours(modal.userId, amount);
-          break;
-        case 'role':
-          if (!['admin', 'revendedor', 'usuario'].includes(inputValue)) {
-            alert('Role inválido');
-            return;
-          }
-          await userAPI.changeUserRole(modal.userId, inputValue);
-          break;
-        case 'ban':
-          if (!inputValue.trim()) {
-            alert('Motivo do banimento é obrigatório');
-            return;
-          }
-          await userAPI.banUser(modal.userId, inputValue);
-          break;
+        switch (modal.type) {
+          case 'credits':
+            if (modal.action === 'add') {
+              await userAPI.addCredits(modal.userId, amount);
+            } else {
+              await userAPI.removeCredits(modal.userId, amount);
+            }
+            break;
+          case 'days':
+            if (modal.action === 'add') {
+              await userAPI.addDays(modal.userId, amount);
+            } else {
+              await userAPI.removeDays(modal.userId, amount);
+            }
+            break;
+          case 'role':
+            if (!['admin', 'revendedor', 'usuario'].includes(inputValue)) {
+              alert('Role inválido');
+              return;
+            }
+            await userAPI.changeUserRole(modal.userId, inputValue);
+            break;
+          case 'ban':
+            if (!inputValue.trim()) {
+              alert('Motivo do banimento é obrigatório');
+              return;
+            }
+            await userAPI.banUser(modal.userId, inputValue);
+            break;
+        }
       }
 
       closeModal();
@@ -519,14 +525,6 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                             </button>
                           </div>
 
-                          <button
-                            onClick={() => openModal('hours', userData.id, userData.nome, 'add')}
-                            className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"
-                            title="Adicionar Horas"
-                          >
-                            <Plus className="w-3 h-3" />
-                            <Clock className="w-3 h-3" />
-                          </button>
 
                           {user.tipo === 'admin' && (
                             <button
@@ -555,6 +553,16 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                               <UserCheck className="w-3 h-3" />
                             </button>
                           )}
+                          
+                          {user.tipo === 'admin' && (
+                            <button
+                              onClick={() => openModal('delete', userData.id, userData.nome)}
+                              className="flex items-center space-x-1 px-2 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 transition-colors"
+                              title="Deletar Usuário"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -574,9 +582,9 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                   {modal.type === 'credits' && modal.action === 'remove' && 'Remover Créditos'}
                   {modal.type === 'days' && modal.action === 'add' && 'Adicionar Dias'}
                   {modal.type === 'days' && modal.action === 'remove' && 'Remover Dias'}
-                  {modal.type === 'hours' && 'Adicionar Horas'}
                   {modal.type === 'role' && 'Alterar Role'}
                   {modal.type === 'ban' && 'Banir Usuário'}
+                  {modal.type === 'delete' && 'Deletar Usuário'}
                 </h3>
                 <button
                   onClick={closeModal}
@@ -620,12 +628,20 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                       placeholder="Digite o motivo do banimento..."
                     />
                   </div>
+                ) : modal.type === 'delete' ? (
+                  <div>
+                    <p className="text-red-600 font-medium">
+                      ⚠️ Esta ação não pode ser desfeita!
+                    </p>
+                    <p className="text-gray-600 mt-2">
+                      Tem certeza que deseja deletar permanentemente este usuário?
+                    </p>
+                  </div>
                 ) : (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       {modal.type === 'credits' && 'Quantidade de Créditos'}
                       {modal.type === 'days' && 'Quantidade de Dias'}
-                      {modal.type === 'hours' && 'Quantidade de Horas'}
                     </label>
                     <input
                       type="number"
@@ -648,10 +664,14 @@ export default function AdminUsers({ user, onLogout }: AdminUsersProps) {
                 </button>
                 <button
                   onClick={handleModalSubmit}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-                  disabled={!inputValue}
+                  className={`px-6 py-3 text-white rounded-xl transition-colors ${
+                    modal.type === 'delete' 
+                      ? 'bg-red-600 hover:bg-red-700' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                  }`}
+                  disabled={modal.type !== 'delete' && !inputValue}
                 >
-                  Confirmar
+                  {modal.type === 'delete' ? 'Deletar' : 'Confirmar'}
                 </button>
               </div>
             </div>

@@ -185,6 +185,12 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
     console.log('=== VERIFICANDO USUARIO APOS COMMIT ===');
     const userVerificacao = await User.findByPk(usuario_id);
     console.log('Modulos do usuario APOS COMMIT:', JSON.stringify(userVerificacao.modulos, null, 2));
+    console.log('Usuario completo APOS COMMIT:', JSON.stringify({
+      id: userVerificacao.id,
+      nome: userVerificacao.nome,
+      creditos: userVerificacao.creditos,
+      modulos: userVerificacao.modulos
+    }, null, 2));
 
     await logConsulta(usuario_id, `Consulta ${modulo.nome}`, {
       modulo_id,

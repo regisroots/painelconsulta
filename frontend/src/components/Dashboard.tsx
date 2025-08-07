@@ -44,6 +44,8 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
     try {
       const response = await profileAPI.getProfile();
       const userData = response.user || response;
+      console.log('Dashboard - Dados do usuário carregados:', userData);
+      console.log('Dashboard - Módulos do usuário:', userData.modulos);
       setCurrentUser(userData);
       if (onUserUpdate) {
         onUserUpdate(userData);
@@ -76,7 +78,10 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
       <ConsultaInterface 
         modulo={selectedModulo} 
         onBack={() => setSelectedModulo(null)}
-        onConsultaSuccess={() => loadUserData()}
+        onConsultaSuccess={() => {
+          console.log('Dashboard - Consulta realizada com sucesso, recarregando dados do usuário');
+          loadUserData();
+        }}
       />
     );
   }
@@ -408,8 +413,10 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
                         {(() => {
                           const moduloFromState = modulos.find(m => m.id === modulo.id);
                           const defaultLimit = moduloFromState?.limite_padrao_quantidade || 1000;
-                          const moduloConfig = user.modulos?.[modulo.id];
+                          const moduloConfig = currentUser.modulos?.[modulo.id];
                           
+                          console.log('Dashboard - Módulo config para', modulo.nome, ':', moduloConfig);
+                          console.log('Dashboard - Default limit:', defaultLimit);
                           
                           if (!moduloConfig) {
                             return (

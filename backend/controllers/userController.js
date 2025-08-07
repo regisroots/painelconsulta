@@ -564,14 +564,9 @@ const removeDays = async (req, res) => {
   }
 };
 
-const addHours = async (req, res) => {
+const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { hours } = req.body;
-
-    if (!hours || hours <= 0) {
-      return res.status(400).json({ error: 'Quantidade de horas deve ser maior que zero' });
-    }
 
     const user = await User.findByPk(id);
     if (!user) {
@@ -579,44 +574,26 @@ const addHours = async (req, res) => {
     }
 
     if (req.user.tipo === 'revendedor' && user.tipo === 'admin') {
-      return res.status(403).json({ error: 'Revendedor não pode modificar admin' });
+      return res.status(403).json({ error: 'Revendedor não pode deletar admin' });
     }
 
-    const hoursInDays = parseInt(hours) / 24;
-    user.dias_ativos += hoursInDays;
-    
-    if (user.data_expiracao) {
-      const currentExpiration = new Date(user.data_expiracao);
-      currentExpiration.setHours(currentExpiration.getHours() + parseInt(hours));
-      user.data_expiracao = currentExpiration;
-    } else {
-      const newExpiration = new Date();
-      newExpiration.setHours(newExpiration.getHours() + parseInt(hours));
-      user.data_expiracao = newExpiration;
+    if (user.id === req.user.id) {
+      return res.status(400).json({ error: 'Não é possível deletar seu próprio usuário' });
     }
 
-    await user.save();
+    await user.destroy();
 
     const logFunction = req.user.tipo === 'admin' ? logAdminAction : logRevendedorAction;
-    await logFunction(req.user.id, 'Horas adicionadas', { 
+    await logFunction(req.user.id, 'Usuário deletado', { 
       usuario_id: id,
-      quantidade: hours,
-      dias_ativos_final: user.dias_ativos,
-      nova_expiracao: user.data_expiracao
+      nome: user.nome,
+      email: user.email
     });
 
-    res.json({
-      message: 'Horas adicionadas com sucesso',
-      user: {
-        id: user.id,
-        nome: user.nome,
-        dias_ativos: user.dias_ativos,
-        data_expiracao: user.data_expiracao,
-      },
-    });
+    res.json({ message: 'Usuário deletado com sucesso' });
 
   } catch (error) {
-    console.error('Erro ao adicionar horas:', error);
+    console.error('Erro ao deletar usuário:', error);
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 };
@@ -742,10 +719,10 @@ module.exports = {
   removeCredits,
   addDays,
   removeDays,
-  addHours,
   changeUserRole,
   login,
   register,
   getUserMetrics,
-  setUserModuleLimit
+  setUserModuleLimit,
+  deleteUser
 };
