@@ -410,14 +410,6 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
                           const defaultLimit = moduloFromState?.limite_padrao_quantidade || 1000;
                           const moduloConfig = user.modulos?.[modulo.id];
                           
-                          console.log('=== DASHBOARD DEBUG ===');
-                          console.log('Modulo ID:', modulo.id);
-                          console.log('Modulo nome:', modulo.nome);
-                          console.log('moduloFromState:', moduloFromState);
-                          console.log('defaultLimit:', defaultLimit);
-                          console.log('moduloConfig:', moduloConfig);
-                          console.log('user.modulos:', user.modulos);
-                          console.log('=== FIM DEBUG ===');
                           
                           if (!moduloConfig) {
                             return (
