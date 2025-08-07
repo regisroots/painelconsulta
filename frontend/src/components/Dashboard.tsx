@@ -23,7 +23,7 @@ export default function Dashboard({ user, onLogout, onUserUpdate }: DashboardPro
     
     const interval = setInterval(() => {
       loadUserData();
-    }, 10000);
+    }, 5000);
     
     return () => clearInterval(interval);
   }, [user]);
