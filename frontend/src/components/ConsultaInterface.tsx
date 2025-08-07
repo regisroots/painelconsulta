@@ -36,9 +36,6 @@ export default function ConsultaInterface({ modulo, onBack, onConsultaSuccess }:
       if (onConsultaSuccess) {
         onConsultaSuccess();
       }
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
     } catch (err: any) {
       console.error('Erro na consulta:', err);
       setError(err.response?.data?.error || 'Erro ao realizar consulta');

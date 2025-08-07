@@ -69,25 +69,30 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
       console.log('Modulo ID:', modulo_id);
       console.log('Usuario ID:', usuario_id);
       console.log('Modulos do usuario ANTES:', JSON.stringify(user.modulos, null, 2));
+      console.log('Modulo tipo_limite:', modulo.tipo_limite);
 
       if (modulo.tipo_limite === 'creditos') {
         console.log('Debitando 1 credito. Creditos antes:', user.creditos);
         user.creditos -= 1;
         console.log('Creditos depois:', user.creditos);
+      } else if (modulo.tipo_limite === 'quantidade') {
+        console.log('=== PROCESSANDO MODULO TIPO QUANTIDADE ===');
+        const novosModulos = { ...user.modulos };
+        if (!novosModulos[modulo_id]) {
+          console.log('Modulo nao encontrado nos modulos do usuario, criando entrada');
+          novosModulos[modulo_id] = { limite: 0, usado: 0 };
+        }
+        
+        console.log('Usado ANTES:', novosModulos[modulo_id].usado);
+        novosModulos[modulo_id].usado += 1;
+        console.log('Usado DEPOIS:', novosModulos[modulo_id].usado);
+        
+        user.modulos = novosModulos;
+        console.log('Modulos do usuario DEPOIS:', JSON.stringify(user.modulos, null, 2));
+        console.log('=== FIM PROCESSAMENTO MODULO QUANTIDADE ===');
+      } else {
+        console.log('TIPO DE LIMITE NAO RECONHECIDO:', modulo.tipo_limite);
       }
-
-      const novosModulos = { ...user.modulos };
-      if (!novosModulos[modulo_id]) {
-        console.log('Modulo nao encontrado nos modulos do usuario, criando entrada');
-        novosModulos[modulo_id] = { limite: 0, usado: 0 };
-      }
-      
-      console.log('Usado ANTES:', novosModulos[modulo_id].usado);
-      novosModulos[modulo_id].usado += 1;
-      console.log('Usado DEPOIS:', novosModulos[modulo_id].usado);
-      
-      user.modulos = novosModulos;
-      console.log('Modulos do usuario DEPOIS:', JSON.stringify(user.modulos, null, 2));
 
       console.log('=== SALVANDO USUARIO ===');
       await user.save({ transaction });
@@ -109,6 +114,9 @@ const executarConsulta = async (usuario_id, modulo_id, input) => {
     console.log('=== FAZENDO COMMIT DA TRANSACAO ===');
     await transaction.commit();
     console.log('=== TRANSACAO COMMITADA COM SUCESSO ===');
+    console.log('=== VERIFICANDO USUARIO APOS COMMIT ===');
+    const userVerificacao = await User.findByPk(usuario_id);
+    console.log('Modulos do usuario APOS COMMIT:', JSON.stringify(userVerificacao.modulos, null, 2));
 
     await logConsulta(usuario_id, `Consulta ${modulo.nome}`, {
       modulo_id,
