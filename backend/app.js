@@ -1,0 +1,511 @@
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const path = require('path');
+require('dotenv').config();
+
+const db = require('./models');
+console.log('Loading auth routes...');
+const authRoutes = require('./routes/auth');
+console.log('Loading user routes...');
+const userRoutes = require('./routes/users');
+console.log('Loading modulo routes...');
+const moduloRoutes = require('./routes/modulos');
+console.log('Loading consulta routes...');
+const consultaRoutes = require('./routes/consultas');
+console.log('Loading log routes...');
+const logRoutes = require('./routes/logs');
+console.log('Loading profile routes...');
+const profileRoutes = require('./routes/profile');
+console.log('Loading upload routes...');
+const uploadRoutes = require('./routes/upload');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+process.env.TZ = 'America/Sao_Paulo';
+
+app.use(helmet());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.com'] 
+    : ['http://localhost:5173', 'http://localhost:3000'],
+  credentials: true,
+}));
+
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: 100, // máximo 100 requests por IP por janela
+//   message: {
+//     error: 'Muitas tentativas. Tente novamente em 15 minutos.',
+//   },
+// });
+// app.use(limiter);
+
+// const loginLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutos
+//   max: process.env.NODE_ENV === 'production' ? 5 : 100, // 100 tentativas em dev, 5 em produção
+//   message: {
+//     error: 'Muitas tentativas de login. Tente novamente em 15 minutos.',
+//   },
+// });
+
+app.use(morgan('combined'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+console.log('Registering auth routes...');
+app.use('/api/auth', authRoutes);
+console.log('Auth routes registered successfully');
+
+console.log('Registering user routes...');
+app.use('/api/users', userRoutes);
+console.log('User routes registered successfully');
+
+console.log('Registering modulo routes...');
+app.use('/api/modulos', moduloRoutes);
+console.log('Modulo routes registered successfully');
+
+console.log('Registering consulta routes...');
+app.use('/api/consultas', consultaRoutes);
+console.log('Consulta routes registered successfully');
+
+console.log('Registering admin routes...');
+app.use('/api/admin', require('./routes/admin'));
+console.log('Admin routes registered successfully');
+
+console.log('Registering log routes...');
+app.use('/api/logs', require('./routes/logs'));
+console.log('Log routes registered successfully');
+
+console.log('Registering profile routes...');
+app.use('/api/profile', profileRoutes);
+console.log('Profile routes registered successfully');
+
+console.log('Registering upload routes...');
+app.use('/api/upload', uploadRoutes);
+console.log('Upload routes registered successfully');
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    timezone: process.env.TZ 
+  });
+});
+
+app.get('/api/test/status', (req, res) => {
+  res.json({
+    success: true,
+    message: 'API funcionando corretamente',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
+app.get('/api/test/cpf/:cpf', async (req, res) => {
+  try {
+    const { cpf } = req.params;
+    
+    if (!cpf || cpf.length !== 11) {
+      return res.status(400).json({
+        success: false,
+        message: 'CPF deve ter 11 dígitos'
+      });
+    }
+
+    const apiUrl = `https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cpf&Info=${cpf}`;
+    
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    
+    res.json({
+      success: true,
+      message: 'Consulta CPF realizada com sucesso',
+      data: data,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Erro na consulta CPF de teste:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erro interno do servidor',
+      error: error.message
+    });
+  }
+});
+
+app.get('/api/local-test/cpf/:cpf', (req, res) => {
+  const { cpf } = req.params;
+  
+  setTimeout(() => {
+    res.json({
+      success: true,
+      cpf: cpf,
+      dados_pessoais: {
+        nome: "JOÃO DA SILVA SANTOS",
+        data_nascimento: "15/03/1985",
+        situacao_cpf: "REGULAR",
+        data_inscricao: "10/05/2003"
+      },
+      endereco: {
+        logradouro: "RUA DAS FLORES, 123",
+        bairro: "CENTRO",
+        cidade: "SÃO PAULO",
+        uf: "SP",
+        cep: "01234-567"
+      },
+      receita_federal: {
+        situacao: "ATIVA",
+        ultima_consulta: "2025-08-06",
+        comprovante_situacao: "REGULAR"
+      },
+      vinculos: {
+        empresas: [
+          {
+            cnpj: "12.345.678/0001-90",
+            razao_social: "EMPRESA EXEMPLO LTDA",
+            situacao: "ATIVA",
+            data_inicio: "01/01/2020"
+          }
+        ],
+        total_vinculos: 1
+      },
+      score: {
+        pontuacao: 750,
+        classificacao: "BOM",
+        ultima_atualizacao: "2025-08-06"
+      },
+      consulta_info: {
+        timestamp: new Date().toISOString(),
+        fonte: "API_LOCAL_TEST",
+        versao: "1.0"
+      }
+    });
+  }, 1000);
+});
+
+app.use((err, req, res, next) => {
+  console.error('Erro:', err);
+  
+  if (err.name === 'SequelizeValidationError') {
+    return res.status(400).json({
+      error: 'Dados inválidos',
+      details: err.errors.map(e => e.message),
+    });
+  }
+  
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    return res.status(400).json({
+      error: 'Dados duplicados',
+      details: err.errors.map(e => e.message),
+    });
+  }
+  
+  res.status(500).json({ 
+    error: 'Erro interno do servidor',
+    message: process.env.NODE_ENV === 'development' ? err.message : undefined,
+  });
+});
+
+// app.use('*', (req, res) => {
+//   res.status(404).json({ error: 'Rota não encontrada' });
+// });
+
+const initializeApp = async () => {
+  try {
+    await db.sequelize.authenticate();
+    console.log('✅ Conexão com PostgreSQL estabelecida com sucesso.');
+
+    await db.sequelize.sync({ force: false });
+    console.log('✅ Modelos sincronizados com o banco de dados.');
+
+    await createInitialData();
+
+    app.listen(PORT, () => {
+      console.log(`🚀 Servidor rodando na porta ${PORT}`);
+      console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
+      console.log(`🕐 Timezone: ${process.env.TZ}`);
+    });
+
+  } catch (error) {
+    console.error('❌ Erro ao inicializar aplicação:', error);
+    process.exit(1);
+  }
+};
+
+const createInitialData = async () => {
+  try {
+    const bcrypt = require('bcryptjs');
+    
+    const adminExists = await db.User.findOne({ where: { tipo: 'admin' } });
+    
+    if (!adminExists) {
+      const adminPassword = await bcrypt.hash('admin123', 10);
+      await db.User.create({
+        nome: 'Administrador',
+        email: 'admin@painelconsulta.com',
+        senha_hash: adminPassword,
+        tipo: 'admin',
+        creditos: 1000,
+        ativo: true,
+      });
+      console.log('✅ Usuário admin criado: admin@painelconsulta.com / admin123');
+    }
+
+    const modulosCount = await db.Modulo.count();
+    
+    if (modulosCount === 0) {
+      await db.Modulo.bulkCreate([
+        {
+          nome: 'CPF Local Test',
+          descricao: 'Módulo de teste local para consulta CPF',
+          api_url: 'http://localhost:3000/api/local-test/cpf/{cpf}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 1.00,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'cpf', tipo: 'string', obrigatorio: true, mascara: '000.000.000-00' }
+          ],
+          ativo: true,
+          timeout_segundos: 30,
+        },
+        {
+          nome: 'Consulta CPF',
+          descricao: 'Consulta dados por CPF',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cpf&Info={cpf}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 1.00,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'cpf', tipo: 'string', obrigatorio: true, mascara: '000.000.000-00' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta CNPJ',
+          descricao: 'Consulta dados por CNPJ',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cnpj&Info={cnpj}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 2.00,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'cnpj', tipo: 'string', obrigatorio: true, mascara: '00.000.000/0000-00' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta CEP',
+          descricao: 'Consulta endereço por CEP',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=cep&Info={cep}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 0.50,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'cep', tipo: 'string', obrigatorio: true, mascara: '00000-000' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta Chassi',
+          descricao: 'Consulta dados por chassi de veículo',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=chassi&Info={chassi}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 3.00,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'chassi', tipo: 'string', obrigatorio: true, mascara: '' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta Email',
+          descricao: 'Consulta dados por email',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=email&Info={email}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 1.50,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'email', tipo: 'email', obrigatorio: true, mascara: '' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta Telefone',
+          descricao: 'Consulta dados por telefone',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=telefone&Info={telefone}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 1.00,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'telefone', tipo: 'string', obrigatorio: true, mascara: '(00) 00000-0000' }
+          ],
+          ativo: true,
+        },
+        {
+          nome: 'Consulta Placa',
+          descricao: 'Consulta dados por placa de veículo',
+          api_url: 'https://voidsearch.localto.net/api/search?Access-Key=DcEe-zQXZ-Gv9V-KAJ3-mzr2&Base=placa&Info={placa}',
+          tipo_limite: 'quantidade',
+          preco_por_consulta: 2.50,
+          limite_padrao_quantidade: 1500,
+          campos_entrada: [
+            { nome: 'placa', tipo: 'string', obrigatorio: true, mascara: 'AAA-0000' }
+          ],
+          ativo: true,
+        }
+      ]);
+      console.log('✅ Módulos de exemplo criados.');
+      
+      await fixCEPQuantityLimits();
+      await fixCPFQuantityLimits();
+      await fixAllQuantityLimits();
+    }
+
+  } catch (error) {
+    console.error('❌ Erro ao criar dados iniciais:', error);
+  }
+};
+
+const fixCEPQuantityLimits = async () => {
+  try {
+    const cepModule = await db.Modulo.findOne({ where: { nome: 'Consulta CEP' } });
+    if (!cepModule) {
+      console.log('⚠️ Módulo CEP não encontrado');
+      return;
+    }
+
+    const users = await db.User.findAll();
+    let updatedUsers = 0;
+
+    for (const user of users) {
+      const userModulos = user.modulos || {};
+      
+      if (!userModulos[cepModule.id] || userModulos[cepModule.id].limite === 0) {
+        userModulos[cepModule.id] = { 
+          limite: cepModule.limite_padrao_quantidade || 1500, 
+          usado: userModulos[cepModule.id]?.usado || 0 
+        };
+        user.modulos = userModulos;
+        await user.save();
+        updatedUsers++;
+      }
+    }
+
+    if (updatedUsers > 0) {
+      console.log(`✅ Limites de CEP atualizados para ${updatedUsers} usuários`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao corrigir limites de CEP:', error);
+  }
+};
+
+const fixCPFQuantityLimits = async () => {
+  try {
+    const cpfModules = await db.Modulo.findAll({ 
+      where: { 
+        nome: ['Consulta CPF', 'CPF Local Test'] 
+      } 
+    });
+    
+    if (cpfModules.length === 0) {
+      console.log('⚠️ Módulos CPF não encontrados');
+      return;
+    }
+
+    const users = await db.User.findAll();
+    let updatedUsers = 0;
+
+    for (const user of users) {
+      const userModulos = user.modulos || {};
+      let userUpdated = false;
+      
+      for (const cpfModule of cpfModules) {
+        if (!userModulos[cpfModule.id] || userModulos[cpfModule.id].limite === 0) {
+          userModulos[cpfModule.id] = { 
+            limite: cpfModule.limite_padrao_quantidade || 1500, 
+            usado: userModulos[cpfModule.id]?.usado || 0 
+          };
+          userUpdated = true;
+        }
+      }
+      
+      if (userUpdated) {
+        user.modulos = userModulos;
+        await user.save();
+        updatedUsers++;
+      }
+    }
+
+    if (updatedUsers > 0) {
+      console.log(`✅ Limites de CPF atualizados para ${updatedUsers} usuários`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao corrigir limites de CPF:', error);
+  }
+};
+
+const fixAllQuantityLimits = async () => {
+  try {
+    const quantityModules = await db.Modulo.findAll({ 
+      where: { 
+        tipo_limite: 'quantidade'
+      } 
+    });
+    
+    if (quantityModules.length === 0) {
+      console.log('⚠️ Nenhum módulo de quantidade encontrado');
+      return;
+    }
+
+    const users = await db.User.findAll();
+    let updatedUsers = 0;
+
+    for (const user of users) {
+      const userModulos = user.modulos || {};
+      let userUpdated = false;
+      
+      for (const module of quantityModules) {
+        if (!userModulos[module.id] || userModulos[module.id].limite === 0) {
+          userModulos[module.id] = { 
+            limite: module.limite_padrao_quantidade || 1500, 
+            usado: userModulos[module.id]?.usado || 0 
+          };
+          userUpdated = true;
+        }
+      }
+      
+      if (userUpdated) {
+        user.modulos = userModulos;
+        await user.save();
+        updatedUsers++;
+      }
+    }
+
+    if (updatedUsers > 0) {
+      console.log(`✅ Limites de quantidade atualizados para ${updatedUsers} usuários`);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao corrigir limites de quantidade:', error);
+  }
+};
+
+process.on('SIGTERM', async () => {
+  console.log('🔄 Recebido SIGTERM, fechando servidor...');
+  await db.sequelize.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('🔄 Recebido SIGINT, fechando servidor...');
+  await db.sequelize.close();
+  process.exit(0);
+});
+
+initializeApp();
+
+module.exports = app;
